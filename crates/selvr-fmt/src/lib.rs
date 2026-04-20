@@ -2,8 +2,12 @@
 //!
 //! # Usage
 //! ```no_run
+//! # fn main() -> Result<(), selvr_fmt::FmtError> {
 //! use selvr_fmt::Formatter;
-//! let formatted = Formatter::new().format_src(source)?;
+//! let source = "fn main() { }";
+//! let _formatted = Formatter::new().format_src(source)?;
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! # Style rules (canonical Selvr)

@@ -117,7 +117,7 @@ Goal: lock in the language spec and produce a working transpiler to JavaScript s
 - [x] Handle runtime polyfills for Selvr-specific features — `SELVR_RUNTIME_PREAMBLE`
 - [x] Wire up a CLI: `selvr build file.self → file.js` — `crates/selvr-cli/`
 - [x] Produce source maps so debuggers point at `.self` files — `sourcemap.rs`
-- [x] Ship a browser playground so people can try it online (`playground/index.html`)
+- [x] Ship a browser playground so people can try it online (`docs/playground/index.html`)
 
 ---
 

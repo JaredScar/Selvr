@@ -103,7 +103,7 @@ SELVR/
 - [x] CLI (`selvr build`, `selvr run`, `selvr check`, `selvr test`, `selvr fmt`, …)
 - [x] Standard library (`std/`)
 - [x] Source maps (`.self` ↔ generated JS)
-- [x] Browser playground (`playground/`)
+- [x] Browser playground (`docs/playground/`)
 
 ### Phase 2 — Native bytecode VM
 

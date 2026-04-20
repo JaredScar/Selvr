@@ -54,6 +54,7 @@
     .card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
     .tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 6px; }
     .tag.correctness { color: var(--accent2); }
+    .card-why { font-size: 12px; color: #94a3b8; margin-top: 10px; line-height: 1.5; border-top: 1px solid var(--border); padding-top: 10px; }
     code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
   </style>
 </head>
@@ -75,46 +76,73 @@
         <span class="tag">Performance</span>
         <h3>Particle Storm</h3>
         <p>48k particles — <code>Particle[]</code> vs struct-of-arrays <code>Float64Array</code>; FPS and physics ms/frame.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> fewer heap objects and sequential numeric memory usually cut physics time (often a clear gap on the same CPU) because the hot loop stops chasing object references and loads cache-friendly lanes.</p>
       </a>
       <a class="card" href="grid-life/index.html">
         <span class="tag">Performance</span>
         <h3>Grid Life</h3>
         <p>Conway on 180×200 — <code>boolean[][]</code> vs flat <code>Uint8Array</code>; step time and FPS.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> one contiguous buffer vs many row arrays — neighbor reads become a tight stride through RAM, so step ms usually drops (less pointer chasing and better locality).</p>
       </a>
       <a class="card" href="vector-bench/index.html">
         <span class="tag">Performance</span>
         <h3>Vector Bench</h3>
         <p>30k vectors — <code>{x,y,z}[]</code> vs packed <code>Float64Array</code>; batch normalize kernel.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> array-of-structs scatters work across objects; packed <code>Float64Array</code> keeps each component adjacent so the inner normalize loop is friendlier to the CPU cache and JIT.</p>
       </a>
       <a class="card" href="alloc-strike/index.html">
         <span class="tag">Performance</span>
         <h3>Alloc Strike</h3>
         <p>65k-sample fill — new <code>Float64Array</code> every frame vs one reused buffer (GC / allocator).</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> per-frame allocation feeds GC and malloc; reuse removes that cost so frame time is steadier (often much lower ms and fewer hitches).</p>
       </a>
       <a class="card" href="path-bfs/index.html">
         <span class="tag">Performance</span>
         <h3>Path BFS</h3>
         <p>Grid flood fill — <code>Array.shift()</code> FIFO vs <code>Int32Array</code> ring queue.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> <code>shift()</code> rewrites the queue; a ring index on typed memory is O(1) at both ends, so BFS rounds usually show much lower compute ms.</p>
       </a>
       <a class="card" href="count-sort-surge/index.html">
         <span class="tag">Performance</span>
         <h3>Count Sort Surge</h3>
         <p>100k keys — counting sort on <code>number[]</code> vs <code>Uint32Array</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> counting passes touch every element repeatedly — <code>Uint32Array</code> avoids boxed <code>number</code> elements so the inner loops stay dense and fast.</p>
       </a>
       <a class="card" href="matrix-core/index.html">
         <span class="tag">Performance</span>
         <h3>Matrix Core</h3>
         <p>32×32 matmul — <code>number[][]</code> vs row-major <code>Float64Array</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> nested arrays add indirection per row; row-major packed storage matches how CPUs expect to stream floats, so multiply time usually improves.</p>
       </a>
       <a class="card" href="bucket-downpour/index.html">
         <span class="tag">Performance</span>
         <h3>Bucket Downpour</h3>
         <p>24k bucket inserts — nested <code>push</code> vs count + flat scatter.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> many small <code>push</code> chains mean more backing-store growth and pointer work; count-then-scatter into one slab reduces allocator traffic.</p>
       </a>
       <a class="card" href="queue-blitz/index.html">
         <span class="tag">Performance</span>
         <h3>Queue Blitz</h3>
         <p>FIFO stress — <code>shift()</code> vs power-of-two ring buffer.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> this is a deliberate worst case for <code>shift</code> (linear copy each pop); the ring buffer stays O(1), so the ms gap is usually large.</p>
+      </a>
+      <a class="card" href="spring-chain/index.html">
+        <span class="tag">Performance</span>
+        <h3>Spring Chain</h3>
+        <p>3.8k masses — <code>{ x, v }[]</code> vs two <code>Float64Array</code> lanes; spring forces + integration.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> struct-of-arrays removes one heap node per mass; neighbor updates become index math on dense buffers, so integration usually wins on compute ms.</p>
+      </a>
+      <a class="card" href="blur-pass/index.html">
+        <span class="tag">Performance</span>
+        <h3>Blur Pass</h3>
+        <p>120×120 box blur — <code>number[][]</code> vs swapped <code>Uint8Array</code> planes.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> stencil reads hit double indirection and boxed values on <code>number[][]</code>; flat bytes keep the kernel memory-bound but in a straight line through RAM.</p>
+      </a>
+      <a class="card" href="binary-hunt/index.html">
+        <span class="tag">Performance</span>
+        <h3>Binary Hunt</h3>
+        <p>65k sorted keys, 20k <code>lower_bound</code> calls/frame — <code>number[]</code> vs <code>Uint32Array</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> same algorithm; typed slab uses fixed 4-byte elements without per-slot boxing, which often lowers probe cost when the table is large.</p>
       </a>
     </div>
 

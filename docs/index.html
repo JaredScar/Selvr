@@ -101,6 +101,14 @@
       color: var(--muted);
       line-height: 1.5;
     }
+    .card-why {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 8px;
+      line-height: 1.45;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
     .card code {
       font-size: 11px;
       color: var(--accent2);
@@ -171,38 +179,62 @@
       <a class="card" href="games/particle-storm/index.html">
         <h3>Particle Storm</h3>
         <p>48k particles: struct-of-arrays (Selvr-style) vs heap objects — FPS &amp; physics time.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> packed lanes vs <code>Particle[]</code> — fewer references and better cache use on the hot integration loop.</p>
       </a>
       <a class="card" href="games/grid-life/index.html">
         <h3>Grid Life</h3>
         <p>Conway 180×200: flat <code>Uint8Array</code> vs <code>boolean[][]</code> — cache-friendly grid kernels.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> one buffer vs many row arrays — neighbor stencil reads become stride-friendly.</p>
       </a>
       <a class="card" href="games/vector-bench/index.html">
         <h3>Vector Bench</h3>
         <p>30k normalizes: packed <code>Float64Array</code> vs <code>Vec3[]</code> — batch linear algebra.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> AoS scatters loads across objects; SoA keeps components contiguous for the normalize kernel.</p>
       </a>
       <a class="card" href="games/alloc-strike/index.html">
         <h3>Alloc Strike</h3>
         <p>Per-frame <code>Float64Array</code> allocation vs reused buffer — allocator &amp; GC pressure.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> reuse avoids malloc + GC every frame — steadier frame times.</p>
       </a>
       <a class="card" href="games/path-bfs/index.html">
         <h3>Path BFS</h3>
         <p>BFS flood fill: <code>shift()</code> queue vs ring buffer; nested visited vs <code>Uint8Array</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> ring dequeue is O(1); <code>shift()</code> rewrites the whole queue each step.</p>
       </a>
       <a class="card" href="games/count-sort-surge/index.html">
         <h3>Count Sort Surge</h3>
         <p>100k-key counting sort: <code>number[]</code> vs <code>Uint32Array</code> pipeline.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> typed integers avoid boxed elements in tight counting loops.</p>
       </a>
       <a class="card" href="games/matrix-core/index.html">
         <h3>Matrix Core</h3>
         <p>Dense 32×32 matmul: <code>number[][]</code> vs row-major <code>Float64Array</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> row-major flat storage removes per-row pointer hops in the inner multiply.</p>
       </a>
       <a class="card" href="games/bucket-downpour/index.html">
         <h3>Bucket Downpour</h3>
         <p>Spatial buckets: nested arrays + <code>push</code> vs count + <code>Int32Array</code> scatter.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> count + scatter into one slab cuts growth churn from many small arrays.</p>
       </a>
       <a class="card" href="games/queue-blitz/index.html">
         <h3>Queue Blitz</h3>
         <p><code>Array.shift</code> FIFO vs O(1) ring buffer on fixed memory.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> worst-case stress test for <code>shift</code> — ring stays constant-time.</p>
+      </a>
+      <a class="card" href="games/spring-chain/index.html">
+        <h3>Spring Chain</h3>
+        <p>3.8k spring masses: <code>Float64Array</code> lanes vs <code>{ x, v }[]</code> — integration &amp; draw.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> SoA removes a heap object per node; forces use sequential index math on dense buffers.</p>
+      </a>
+      <a class="card" href="games/blur-pass/index.html">
+        <h3>Blur Pass</h3>
+        <p>120×120 box blur: <code>Uint8Array</code> planes vs <code>number[][]</code> stencil.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> flat bytes vs nested rows — less indirection and boxing on every neighbor sample.</p>
+      </a>
+      <a class="card" href="games/binary-hunt/index.html">
+        <h3>Binary Hunt</h3>
+        <p>20k binary searches/frame on 65k keys: <code>Uint32Array</code> vs <code>number[]</code>.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> same algorithm; fixed-width slab improves locality vs boxed array slots.</p>
       </a>
       <a class="card" href="games/core-harvest/index.html">
         <h3>Core Harvest</h3>

@@ -1,5 +1,7 @@
 ﻿# Selvr Bytecode Specification
 
+**[Read as a web page →](bytecode.html)**
+
 **Format version:** 0.1  
 **Status:** Draft — subject to change before 1.0.
 

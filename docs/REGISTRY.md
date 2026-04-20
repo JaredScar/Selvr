@@ -1,5 +1,7 @@
 # Selvr Package Registry
 
+**[Read as a web page →](registry.html)**
+
 The Selvr package registry (`pkg.selvr-lang.org`) hosts community and official packages
 for the Selvr language. It is inspired by crates.io and follows the same core design
 principles: content-addressed packages, immutable versions, and a simple REST API.

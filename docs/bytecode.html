@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr Bytecode Specification — Documentation</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161f;
+      --border: #232736;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding-bottom: 48px;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header .logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    header .crumb { font-size: 13px; color: var(--muted); }
+    nav.top {
+      margin-left: auto;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    nav.top a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    nav.top a:hover { color: var(--text); }
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 36px 28px 0;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    .meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .meta a { color: var(--accent); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+    .toc strong { color: var(--text); display: block; margin-bottom: 10px; }
+    .toc ul { margin: 0; padding-left: 1.2rem; color: #cbd5e1; }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 36px 0 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 22px 0 10px;
+      color: #f1f5f9;
+    }
+    p { margin-bottom: 14px; color: #cbd5e1; font-size: 15px; }
+    ul, ol { margin: 0 0 14px 1.25rem; color: #cbd5e1; font-size: 15px; }
+    li { margin-bottom: 6px; }
+    pre.diagram, pre.code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 14px 0;
+      color: #cbd5e1;
+      font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+    }
+    code {
+      font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+      font-size: 0.9em;
+      background: rgba(35, 39, 54, 0.8);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #a5b4fc;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    table.doc {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0 18px;
+    }
+    table.doc th,
+    table.doc td {
+      border: 1px solid var(--border);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.doc th {
+      background: rgba(19, 22, 31, 0.9);
+      color: var(--text);
+      font-weight: 600;
+    }
+    table.doc td { color: #cbd5e1; }
+    table.doc code { font-size: 12px; }
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    .note { font-size: 14px; color: var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html">Selvr</a>
+  <span class="crumb">Bytecode specification</span>
+  <nav class="top">
+    <a href="#instruction-set">Opcodes</a>
+    <a href="registry.html">Package registry</a>
+    <a href="playground/index.html">Playground</a>
+  </nav>
+</header>
+<main>
+  <h1>Selvr Bytecode Specification</h1>
+  <p class="meta"><strong>Format version:</strong> 0.1 · <strong>Status:</strong> Draft — subject to change before 1.0.
+  · Source: <a href="https://github.com/JaredScar/Selvr/blob/master/docs/BYTECODE.md"><code>BYTECODE.md</code></a></p>
+
+  <nav class="toc" aria-label="On this page">
+    <strong>On this page</strong>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#file-layout">File layout</a></li>
+      <li><a href="#constant-pool">Constant pool</a></li>
+      <li><a href="#instruction-set">Instruction set (opcodes)</a></li>
+      <li><a href="#value-representation">Value representation</a></li>
+      <li><a href="#incremental">Incremental compilation</a></li>
+      <li><a href="#optimization">Optimization passes</a></li>
+      <li><a href="#future">Future work</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="overview">Overview</h2>
+  <p>Selvr compiles <code>.self</code> source files to a compact binary format called <strong>Selvr Bytecode</strong> (<code>.vlxc</code>). A <code>.vlxc</code> file is a self-contained, position-independent module that can be loaded and executed by the Selvr VM (<code>selvr-vm</code>) compiled to WebAssembly.</p>
+  <p>The design priorities are:</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Priority</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Small size</strong></td><td>Faster network transfer than equivalent JS bundles</td></tr>
+      <tr><td><strong>Fast decode</strong></td><td>Linear scan; no tree traversal at startup</td></tr>
+      <tr><td><strong>Simple VM</strong></td><td>Stack machine; no register allocation needed</td></tr>
+      <tr><td><strong>Safe</strong></td><td>All array accesses bounds-checked; no raw pointers</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="file-layout">File layout</h2>
+  <pre class="diagram">┌─────────────────────────────────────────────────┐
+│  Magic     6 bytes  b"SELVR\x01"                │
+│  Version   2 bytes  u8 major, u8 minor          │
+│  Source    2+N bytes  u16 length + UTF-8 name   │
+│  Hash      32 bytes   SHA-256 of source         │
+├─────────────────────────────────────────────────┤
+│  Constant pool                                  │
+│    count   2 bytes  u16                         │
+│    entries …                                    │
+│      tag   1 byte   0=Str  1=Name               │
+│      len   2 bytes  u16                         │
+│      data  N bytes  UTF-8                       │
+├─────────────────────────────────────────────────┤
+│  Function table                                 │
+│    count   2 bytes  u16                         │
+│    records …                                    │
+│      name_idx    2 bytes  u16 (pool index)      │
+│      param_count 1 byte   u8                    │
+│      local_count 2 bytes  u16                   │
+│      flags       1 byte   bit0=export bit1=async│
+│      code_len    4 bytes  u32                   │
+│      code        N bytes  instruction stream    │
+└─────────────────────────────────────────────────┘</pre>
+  <p>All multi-byte integers are <strong>little-endian</strong>.</p>
+
+  <h2 id="constant-pool">Constant pool</h2>
+  <p>The constant pool stores all string and name literals referenced by the code. Strings are deduplicated: each unique value appears at most once.</p>
+  <p>Two entry types exist:</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Tag</th><th>Kind</th><th>Used by</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>0</code></td><td><code>Str</code></td><td><code>PushStr</code>, <code>LoadGlobal</code>, <code>StoreGlobal</code></td></tr>
+      <tr><td><code>1</code></td><td><code>Name</code></td><td><code>NewStruct</code>, <code>GetField</code>, <code>SetField</code></td></tr>
+    </tbody>
+  </table>
+  <p>Pool indices are <code>u16</code> (max 65 535 entries per module).</p>
+
+  <h2 id="instruction-set">Instruction set</h2>
+  <p>Each instruction is 1–9 bytes: opcode (<code>u8</code>) followed by zero or more immediate operands.</p>
+
+  <h3 id="constants">Constants</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>PushI32</code></td><td><code>0x01</code></td><td><code>i32</code> (4 B)</td><td>Push 32-bit signed integer</td></tr>
+      <tr><td><code>PushI64</code></td><td><code>0x02</code></td><td><code>i64</code> (8 B)</td><td>Push 64-bit signed integer</td></tr>
+      <tr><td><code>PushF64</code></td><td><code>0x03</code></td><td><code>f64</code> (8 B)</td><td>Push double-precision float</td></tr>
+      <tr><td><code>PushBool</code></td><td><code>0x04</code></td><td><code>u8</code> (1 B)</td><td>Push boolean (<code>0</code>=false <code>1</code>=true)</td></tr>
+      <tr><td><code>PushStr</code></td><td><code>0x05</code></td><td><code>u16</code> (2 B)</td><td>Push string from pool[idx]</td></tr>
+      <tr><td><code>PushNone</code></td><td><code>0x06</code></td><td><code>u16</code> (2 B, reserved)</td><td>Push <code>None</code></td></tr>
+      <tr><td><code>PushUnit</code></td><td><code>0x07</code></td><td><code>u16</code> (2 B, reserved)</td><td>Push unit/void</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="locals">Locals &amp; globals</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>LoadLocal</code></td><td><code>0x10</code></td><td><code>u16</code> local index</td><td>Push local slot</td></tr>
+      <tr><td><code>StoreLocal</code></td><td><code>0x11</code></td><td><code>u16</code> local index</td><td>Pop into local slot</td></tr>
+      <tr><td><code>LoadGlobal</code></td><td><code>0x12</code></td><td><code>u16</code> pool index</td><td>Push global (function or var)</td></tr>
+      <tr><td><code>StoreGlobal</code></td><td><code>0x13</code></td><td><code>u16</code> pool index</td><td>Pop into global variable</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="stack">Stack manipulation</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Pop</code></td><td><code>0x20</code></td><td>Discard TOS</td></tr>
+      <tr><td><code>Dup</code></td><td><code>0x21</code></td><td>Duplicate TOS</td></tr>
+      <tr><td><code>Swap</code></td><td><code>0x22</code></td><td>Swap top two values</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="arithmetic">Arithmetic</h3>
+  <p>All operators consume two operands and produce one result. Operand types must match at runtime (the type checker ensures this statically).</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Operation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Add</code></td><td><code>0x30</code></td><td><code>a + b</code> (i32, i64, f64, or string concat)</td></tr>
+      <tr><td><code>Sub</code></td><td><code>0x31</code></td><td><code>a - b</code></td></tr>
+      <tr><td><code>Mul</code></td><td><code>0x32</code></td><td><code>a * b</code></td></tr>
+      <tr><td><code>Div</code></td><td><code>0x33</code></td><td><code>a / b</code> (panics on integer divide-by-zero)</td></tr>
+      <tr><td><code>Rem</code></td><td><code>0x34</code></td><td><code>a % b</code></td></tr>
+      <tr><td><code>Neg</code></td><td><code>0x35</code></td><td><code>-a</code> (unary)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="bitwise">Bitwise</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Operation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>BitAnd</code></td><td><code>0x38</code></td><td><code>a &amp; b</code></td></tr>
+      <tr><td><code>BitOr</code></td><td><code>0x39</code></td><td><code>a | b</code></td></tr>
+      <tr><td><code>BitXor</code></td><td><code>0x3A</code></td><td><code>a ^ b</code></td></tr>
+      <tr><td><code>Shl</code></td><td><code>0x3B</code></td><td><code>a &lt;&lt; b</code></td></tr>
+      <tr><td><code>Shr</code></td><td><code>0x3C</code></td><td><code>a &gt;&gt; b</code> (arithmetic)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="comparison">Comparison</h3>
+  <p>All produce a <code>bool</code> result.</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Operation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Eq</code></td><td><code>0x40</code></td><td><code>a == b</code></td></tr>
+      <tr><td><code>Ne</code></td><td><code>0x41</code></td><td><code>a != b</code></td></tr>
+      <tr><td><code>Lt</code></td><td><code>0x42</code></td><td><code>a &lt; b</code></td></tr>
+      <tr><td><code>Le</code></td><td><code>0x43</code></td><td><code>a &lt;= b</code></td></tr>
+      <tr><td><code>Gt</code></td><td><code>0x44</code></td><td><code>a &gt; b</code></td></tr>
+      <tr><td><code>Ge</code></td><td><code>0x45</code></td><td><code>a &gt;= b</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="boolean">Boolean</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Operation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>And</code></td><td><code>0x48</code></td><td><code>a &amp;&amp; b</code> (non-short-circuit at bytecode level)</td></tr>
+      <tr><td><code>Or</code></td><td><code>0x49</code></td><td><code>a || b</code></td></tr>
+      <tr><td><code>Not</code></td><td><code>0x4A</code></td><td><code>!a</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="control">Control flow</h3>
+  <p>Jump offsets are <strong>signed 32-bit</strong> values relative to the byte immediately <em>after</em> the 4-byte immediate.</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Jump</code></td><td><code>0x50</code></td><td><code>i32</code> offset</td><td>Unconditional jump</td></tr>
+      <tr><td><code>JumpT</code></td><td><code>0x51</code></td><td><code>i32</code> offset</td><td>Jump if TOS is truthy; pops TOS</td></tr>
+      <tr><td><code>JumpF</code></td><td><code>0x52</code></td><td><code>i32</code> offset</td><td>Jump if TOS is falsy; pops TOS</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="calls">Calls &amp; returns</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Call</code></td><td><code>0x60</code></td><td><code>u8</code> arity</td><td>Call function on TOS with <code>arity</code> args below it</td></tr>
+      <tr><td><code>CallNative</code></td><td><code>0x61</code></td><td><code>u16</code> name-idx, <code>u8</code> arity</td><td>Call built-in function</td></tr>
+      <tr><td><code>Return</code></td><td><code>0x62</code></td><td>—</td><td>Return TOS to caller</td></tr>
+      <tr><td><code>ReturnVoid</code></td><td><code>0x63</code></td><td>—</td><td>Return unit to caller</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Call convention:</strong> Arguments are pushed left-to-right, then the function value, then <code>Call arity</code>. On entry the first <code>param_count</code> locals are initialised from the stack (args popped right-to-left).</p>
+
+  <h3 id="objects">Objects &amp; fields</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>NewStruct</code></td><td><code>0x70</code></td><td><code>u16</code> type-name-idx, <code>u16</code> field-count</td><td>Pop N field values, allocate struct</td></tr>
+      <tr><td><code>GetField</code></td><td><code>0x71</code></td><td><code>u16</code> field-name-idx</td><td>Pop object, push field value</td></tr>
+      <tr><td><code>SetField</code></td><td><code>0x72</code></td><td><code>u16</code> field-name-idx</td><td>Pop object and value, set field</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="arrays">Arrays</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>NewArray</code></td><td><code>0x78</code></td><td><code>u16</code> count</td><td>Pop N elements, push array</td></tr>
+      <tr><td><code>ArrayGet</code></td><td><code>0x79</code></td><td>—</td><td>Pop array and index, push element</td></tr>
+      <tr><td><code>ArraySet</code></td><td><code>0x7A</code></td><td>—</td><td>Pop array, index, value; set element</td></tr>
+      <tr><td><code>ArrayLen</code></td><td><code>0x7B</code></td><td>—</td><td>Pop array, push length (<code>i32</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="option-result">Option &amp; Result</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>WrapSome</code></td><td><code>0x80</code></td><td>Pop value, push <code>Some(value)</code></td></tr>
+      <tr><td><code>WrapOk</code></td><td><code>0x81</code></td><td>Pop value, push <code>Ok(value)</code></td></tr>
+      <tr><td><code>WrapErr</code></td><td><code>0x82</code></td><td>Pop value, push <code>Err(value)</code></td></tr>
+      <tr><td><code>IsNone</code></td><td><code>0x83</code></td><td>Pop value, push <code>true</code> if <code>None</code></td></tr>
+      <tr><td><code>IsErr</code></td><td><code>0x84</code></td><td>Pop value, push <code>true</code> if <code>Err(_)</code></td></tr>
+      <tr><td><code>Unwrap</code></td><td><code>0x85</code></td><td>Pop <code>Some</code>/<code>Ok</code>, push inner value; panic on <code>None</code>/<code>Err</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="closures">Closures</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Immediates</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>MakeClosure</code></td><td><code>0x90</code></td><td><code>u16</code> fn-idx, <code>u8</code> capture-count</td><td>Pop N captured locals, push closure</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="misc">Miscellaneous</h3>
+  <table class="doc">
+    <thead>
+      <tr><th>Opcode</th><th>Hex</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Nop</code></td><td><code>0xFF</code></td><td>No operation</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="value-representation">Value representation</h2>
+  <p>At runtime the VM uses a tagged-union <code>Value</code> type:</p>
+  <table class="doc">
+    <thead>
+      <tr><th>Tag</th><th>Rust variant</th><th>Size</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>I32</code></td><td><code>Value::I32(i32)</code></td><td>8 B</td></tr>
+      <tr><td><code>I64</code></td><td><code>Value::I64(i64)</code></td><td>16 B</td></tr>
+      <tr><td><code>F64</code></td><td><code>Value::F64(f64)</code></td><td>16 B</td></tr>
+      <tr><td><code>Bool</code></td><td><code>Value::Bool(bool)</code></td><td>8 B</td></tr>
+      <tr><td><code>Str</code></td><td><code>Value::Str(SmolStr)</code></td><td>32 B (stack-allocated ≤23 chars)</td></tr>
+      <tr><td><code>Object</code></td><td><code>Value::Object(usize)</code> — heap index</td><td>16 B</td></tr>
+      <tr><td><code>None</code></td><td><code>Value::None</code></td><td>8 B</td></tr>
+      <tr><td><code>Unit</code></td><td><code>Value::Unit</code></td><td>8 B</td></tr>
+    </tbody>
+  </table>
+  <p>Heap objects (<code>struct</code>, <code>array</code>, <code>closure</code>, <code>Some</code>, <code>Ok</code>, <code>Err</code>) live in a bump-pointer arena (<code>Heap</code>) and are referenced by index.</p>
+
+  <h2 id="incremental">Incremental compilation</h2>
+  <p>The CLI caches compiled modules by the <strong>SHA-256 content hash</strong> of the source file in <code>~/.SELVR/cache/&lt;hex&gt;.vlxc</code>. On a subsequent build, if the source hash matches a cached artifact the compilation is skipped entirely.</p>
+
+  <h2 id="optimization">Optimization passes</h2>
+  <p>The following passes run over the linear bytecode after emission:</p>
+  <ol>
+    <li><strong>Nop removal</strong> — strips all <code>0xFF</code> bytes.</li>
+    <li><strong>Dead code elimination</strong> — removes instructions after unconditional <code>Jump</code>/<code>Return</code>.</li>
+    <li><strong>Constant folding</strong> — <code>PushI32 a  PushI32 b  &lt;binop&gt;</code> → <code>PushI32 (a op b)</code> for arithmetic and comparison operators. Same for <code>F64</code>.</li>
+  </ol>
+  <p>More advanced passes (inlining, escape analysis) are planned for Phase 3.</p>
+
+  <h2 id="future">Future work</h2>
+  <ul>
+    <li><strong>JIT compilation</strong> — translate hot bytecode paths to native code via Cranelift.</li>
+    <li><strong>SIMD opcodes</strong> — vectorised arithmetic on <code>[f64; N]</code> arrays.</li>
+    <li><strong>Source maps</strong> — map bytecode offsets back to <code>.self</code> source locations.</li>
+    <li><strong>Async coroutine state serialisation</strong> — suspend/resume across page reloads.</li>
+  </ul>
+
+</main>
+</body>
+</html>

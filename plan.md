@@ -149,7 +149,7 @@ Goal: bypass JavaScript entirely for compute-heavy code. Selvr compiles to a com
 - [x] Implement DOM bindings (so Selvr can manipulate the page) — `crates/selvr-vm/src/dom.rs`
 - [x] Implement fetch, timers, and event loop integration — `crates/selvr-vm/src/runtime.rs`
 - [x] Publish the runtime as a single `.wasm` file included with a `<script>` tag — `runtime/selvr-loader.js`
-- [x] Benchmark against V8 (Chrome) on representative workloads — `docs/benchmarks/vm.html`
+- [x] Benchmark against V8 (Chrome) on representative workloads — `docs/benchmarks/tti.html`, `docs/benchmarks/hybrid.html`
 
 ### 2.4 End-to-end integration
 - [x] Write a sample Selvr TodoMVC app — `examples/19_todo_app.self`

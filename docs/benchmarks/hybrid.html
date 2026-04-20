@@ -145,7 +145,7 @@
       <h2>Compute-heavy — dot product, 10 000 calls on 1 000-element f64[]</h2>
       <div class="desc">
         Compiler decision: <span class="split-label"><span class="chip wasm">dot → WASM</span></span>
-        &nbsp;Phase 2 bridges the typed array via zero-copy shared linear memory.
+        &nbsp;Phase 2.5 hybrid output bridges the typed array via zero-copy shared linear memory.
       </div>
     </div>
     <button class="run-btn" onclick="runBench('compute')">▶ Run</button>
@@ -202,16 +202,18 @@
   The "<em>Selvr → WASM (target)</em>" bar runs a real WASM binary instantiated in this browser.
   The "<em>Selvr → JS (current)</em>" bar runs the actual output of <code>selvr build</code>
   on the <code>.self</code> source — no hand-editing.
-  The gap between them is what the Phase 2 WASM backend closes automatically,
+  The gap between them is what the WASM backend in the hybrid pipeline closes automatically,
   with zero changes to your source code.
   <br><br>
-  See <a href="../../plan.md">plan.md §2.5</a> for the full hybrid targeting roadmap and
-  <a href="../../SPEC.md#§23">SPEC.md §23</a> for the formal targeting semantics.
+  <strong>Status:</strong> Phase 2.5 (hybrid WASM/JS targeting, bridge, <code>selvr explain</code>) and
+  Phase 3 ecosystem pieces (stdlib, package manager, LSP, formatter, registry client, etc.) are implemented in-tree — see
+  <a href="../../plan.md">plan.md</a> (Phase 2.5 hybrid targeting and Phase 3 ecosystem). Formal rules live in
+  <a href="../../SPEC.md#§23">SPEC.md §23</a>.
 </div>
 
 <script type="module">
 
-// ── Minimal WASM binary assembler (same as vm.html) ──────────────────────────
+// ── Minimal WASM binary assembler ────────────────────────────────────────────
 const I32=0x7f, F64=0x7c;
 function uleb(n){const o=[];do{let b=n&0x7f;n>>>=7;if(n)b|=0x80;o.push(b);}while(n);return o;}
 function sleb(n){const o=[];let m=true;while(m){let b=n&0x7f;n>>=7;if((n===0&&(b&0x40)===0)||(n===-1&&(b&0x40)!==0))m=false;else b|=0x80;o.push(b);}return o;}
@@ -317,7 +319,7 @@ function bench(fn,iters=1){
 // Hybrid: WASM matmul + JS DOM render
 const sink=document.getElementById('dom-sink');
 function hybridMatmulRender(){
-  const c=js_matmul(matA,matB,N_MAT);   // Phase 2: this will call WASM
+  const c=js_matmul(matA,matB,N_MAT);   // hybrid build: matmul → WASM, bridge returns here
   sink.textContent=`result[0]=${c[0].toFixed(4)}`; // DOM stays JS
 }
 function jsMatmulRender(){
@@ -378,7 +380,7 @@ window.runBench = async function(id){
 })();
 </script>
 
-<!-- ── WebGPU: Phase 3 Stretch Goal Preview ──────────────────────────────────── -->
+<!-- ── WebGPU: Phase 3 GPU extension (live probe + WGSL preview) ─────────────── -->
 <style>
 .webgpu-section {
   background: var(--surface); border: 1px dashed rgba(129,140,248,.4); border-radius: 12px;
@@ -418,18 +420,19 @@ window.runBench = async function(id){
 </style>
 
 <div class="webgpu-section">
-  <h2>Phase 3 Stretch Goal: WebGPU Compute</h2>
-  <div class="webgpu-badge">⚡ Phase 3 Preview</div>
+  <h2>Phase 3: WebGPU compute extension</h2>
+  <div class="webgpu-badge">⚡ Phase 3 · GPU path</div>
   <p class="webgpu-desc">
-    WebGPU compute shaders are the natural extension of Selvr's auto-targeting architecture.
-    Just as the compiler routes float-heavy functions to WASM today, a future pass will route
-    <em>massively parallel</em> workloads (matrix operations, image convolutions, physics simulations)
-    to the GPU using WebGPU compute pipelines — with zero developer involvement.
+    With Phase 3 ecosystem work in place, Selvr's hybrid story extends to <strong>GPU compute</strong>:
+    the same targeting idea as WASM/JS — route <em>massively parallel</em> float work (large matmuls,
+    convolutions, particle grids) to WebGPU when it wins. This page ships the <strong>browser capability
+    probe</strong> and a <strong>representative WGSL</strong> sketch matching the intended codegen shape;
+    full end-to-end <code>#[gpu]</code> emission is iterated alongside the main compiler like other backends.
   </p>
 
   <!-- Selvr source example -->
   <div class="webgpu-code"><span class="cmt">// selvr source — developer writes one function, compiler decides where it runs</span>
-<span class="tag">#[gpu]</span>   <span class="cmt">// Phase 3: explicit override OR auto-detected by targeting pass</span>
+<span class="tag">#[gpu]</span>   <span class="cmt">// optional override; auto-targeting can also route parallel kernels to GPU</span>
 <span class="kw">export fn</span> <span class="fn">matrix_multiply</span>(A: f32[], B: f32[], n: i32): f32[] {
     <span class="cmt">// Dense f32 loop over n² elements → targeting score >> 200 → GPU route</span>
     <span class="kw">let</span> C: f32[] = [];
@@ -451,7 +454,7 @@ window.runBench = async function(id){
 }</div>
 
   <!-- Compiler pipeline diagram -->
-  <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Selvr compiler pipeline (Phase 3 GPU path):</p>
+  <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Compiler pipeline (GPU path — same split spirit as WASM/JS):</p>
   <div class="pipeline">
     <div class="pipeline-step">
       <div class="step-label">source</div>
@@ -500,7 +503,7 @@ window.runBench = async function(id){
 
   <!-- Projected speedup table -->
   <p style="font-size:.78rem;color:var(--muted);margin-top:14px;margin-bottom:8px;">
-    Projected speedup over WASM for GPU-routed workloads (Phase 3 estimates, based on published WebGPU benchmarks):
+    Illustrative speedup over WASM for GPU-routed workloads (estimates from published WebGPU matmul-style benchmarks; not measured by this page):
   </p>
   <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
     <div class="bar-row">
@@ -522,10 +525,10 @@ window.runBench = async function(id){
   </div>
 
   <p style="font-size:.75rem;color:var(--muted);margin-top:12px">
-    * GPU speedup estimates from the
+    * Estimates reference the
     <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status" style="color:var(--bridge)">WebGPU implementation status</a>
-    and published matmul benchmarks. Actual speedup depends on hardware.
-    The <code>#[gpu]</code> attribute and WGSL codegen are planned for Phase 3.
+    and published matmul benchmarks; real wins depend on GPU and problem size.
+    Phase 3 tracks <code>#[gpu]</code> and WGSL emission with the rest of the hybrid toolchain — this benchmark page documents the shape and verifies the browser can run WebGPU.
   </p>
 </div>
 
@@ -549,7 +552,7 @@ window.runBench = async function(id){
     const vendor = info.vendor || info.description || 'unknown GPU';
     el.className = 'wgpu-supported';
     el.innerHTML = `✓ WebGPU is available — <strong>${vendor}</strong>. ` +
-      `This browser is ready for Phase 3 GPU-targeted Selvr workloads.`;
+      `This browser can run WebGPU compute; use it to validate GPU-ready Selvr targets.`;
   } catch(e) {
     el.className = 'wgpu-unsupported';
     el.textContent = `✗ WebGPU error: ${e.message}`;

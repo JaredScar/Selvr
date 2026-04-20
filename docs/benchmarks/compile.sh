@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env bash
-# benchmarks/compile.sh
+# docs/benchmarks/compile.sh
 #
 # Compare Selvr compile times against TypeScript (tsc) and esbuild
 # for progressively larger synthetic source files.
@@ -8,9 +8,9 @@
 #   cargo build --release -p selvr-cli
 #   npm install -g typescript esbuild
 #
-# Usage:
-#   chmod +x benchmarks/compile.sh
-#   ./benchmarks/compile.sh
+# Usage (from repository root):
+#   chmod +x docs/benchmarks/compile.sh
+#   ./docs/benchmarks/compile.sh
 #
 # Output: a table printed to stdout.
 

@@ -111,7 +111,7 @@ SELVR/
 - [x] AST → IR → bytecode compiler (`selvr-ir`, `selvr-bytecode`)
 - [x] WebAssembly-hosted VM (`selvr-vm`)
 - [x] DOM bindings and browser runtime
-- [x] Benchmarks vs. V8 / JS (`benchmarks/`)
+- [x] Benchmarks vs. V8 / JS (`docs/benchmarks/`)
 - [ ] Baseline JIT for hot VM paths (stretch)
 
 ### Phase 2.5 — Hybrid WASM / JS targeting

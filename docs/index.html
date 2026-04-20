@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr — Documentation &amp; benchmarks</title>
+  <style>
+    :root {
+      --bg:      #0d0f14;
+      --surface: #13161f;
+      --border:  #232736;
+      --accent:  #00d4aa;
+      --accent2: #7c6af7;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 64px;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: 13px; color: var(--muted); }
+    .header-nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+    .header-nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .header-nav a:hover { color: var(--text); }
+    .hero {
+      text-align: center;
+      padding: 56px 24px 40px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--muted); font-size: 15px; line-height: 1.6; }
+    main { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    h2 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      margin-bottom: 36px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card:hover {
+      border-color: rgba(0, 212, 170, 0.35);
+      background: rgba(19, 22, 31, 0.95);
+    }
+    .card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .card code {
+      font-size: 11px;
+      color: var(--accent2);
+      background: rgba(124, 106, 247, 0.08);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Selvr</span>
+  <span class="logo-sub">Docs</span>
+  <nav class="header-nav">
+    <a href="../playground/index.html">Playground</a>
+    <a href="https://github.com/selvr-lang/selvr">GitHub</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1><span>Documentation</span> &amp; benchmarks</h1>
+  <p>Static pages served from this repository’s <code style="background:var(--border);padding:2px 8px;border-radius:4px;font-size:13px;">docs/</code> folder — enable GitHub Pages with the <strong>/docs</strong> branch folder.</p>
+</div>
+
+<main>
+  <section>
+    <h2>Guides</h2>
+    <div class="grid">
+      <a class="card" href="why-velox.html">
+        <h3>Why Selvr?</h3>
+        <p>Motivation, design goals, and how Selvr fits on the web.</p>
+      </a>
+      <a class="card" href="comparison.html">
+        <h3>TypeScript vs Selvr</h3>
+        <p>Side-by-side syntax and behavior for common tasks.</p>
+      </a>
+      <a class="card" href="BYTECODE.md">
+        <h3>Bytecode</h3>
+        <p>Reference for the VM bytecode format. <code>BYTECODE.md</code></p>
+      </a>
+      <a class="card" href="REGISTRY.md">
+        <h3>Opcode registry</h3>
+        <p>Opcode listing and semantics. <code>REGISTRY.md</code></p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Benchmarks</h2>
+    <div class="grid">
+      <a class="card" href="benchmarks/startup.html">
+        <h3>Startup &amp; parse time</h3>
+        <p>Cold start: Selvr output vs JS bundle parse cost.</p>
+      </a>
+      <a class="card" href="benchmarks/hybrid.html">
+        <h3>Hybrid targeting</h3>
+        <p>JS vs WASM vs Selvr split and compiler report.</p>
+      </a>
+      <a class="card" href="benchmarks/vm.html">
+        <h3>VM (Chrome)</h3>
+        <p>Representative workloads on the bytecode VM vs V8.</p>
+      </a>
+      <a class="card" href="benchmarks/tti.html">
+        <h3>TTI &amp; FPS</h3>
+        <p>Cold start, time-to-interactive, and animation frame rate.</p>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Clone and build from the <a href="https://github.com/selvr-lang/selvr">GitHub repository</a>. Run compile benchmarks from the repo root: <code>docs/benchmarks/compile.sh</code>.</p>
+</footer>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Selvr — matrix multiply benchmark (N×N f64)
-// Compiled by: selvr build benchmarks/selvr/matmul.self
+// Compiled by: selvr build docs/benchmarks/selvr/matmul.self
 //
 // This function is a prime WASM candidate: float-heavy triple loop, no DOM.
 // `selvr explain matmul.self` will assign it Target::Wasm.

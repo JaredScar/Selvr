@@ -1,5 +1,5 @@
 // Selvr — fibonacci benchmark
-// Compiled by: selvr build benchmarks/selvr/fib.self
+// Compiled by: selvr build docs/benchmarks/selvr/fib.self
 
 // Iterative fibonacci — O(n) time, O(1) space.
 // The targeting pass scores this as WASM: tight integer loop.

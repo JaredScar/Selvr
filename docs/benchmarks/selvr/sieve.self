@@ -1,5 +1,5 @@
 // Selvr — Sieve of Eratosthenes benchmark
-// Compiled by: selvr build benchmarks/selvr/sieve.self
+// Compiled by: selvr build docs/benchmarks/selvr/sieve.self
 //
 // Uses push-based array construction (no index-assignment) to stay within
 // the currently supported parser subset.

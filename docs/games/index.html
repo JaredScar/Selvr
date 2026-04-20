@@ -86,6 +86,36 @@
         <h3>Vector Bench</h3>
         <p>30k vectors — <code>{x,y,z}[]</code> vs packed <code>Float64Array</code>; batch normalize kernel.</p>
       </a>
+      <a class="card" href="alloc-strike/index.html">
+        <span class="tag">Performance</span>
+        <h3>Alloc Strike</h3>
+        <p>65k-sample fill — new <code>Float64Array</code> every frame vs one reused buffer (GC / allocator).</p>
+      </a>
+      <a class="card" href="path-bfs/index.html">
+        <span class="tag">Performance</span>
+        <h3>Path BFS</h3>
+        <p>Grid flood fill — <code>Array.shift()</code> FIFO vs <code>Int32Array</code> ring queue.</p>
+      </a>
+      <a class="card" href="count-sort-surge/index.html">
+        <span class="tag">Performance</span>
+        <h3>Count Sort Surge</h3>
+        <p>100k keys — counting sort on <code>number[]</code> vs <code>Uint32Array</code>.</p>
+      </a>
+      <a class="card" href="matrix-core/index.html">
+        <span class="tag">Performance</span>
+        <h3>Matrix Core</h3>
+        <p>32×32 matmul — <code>number[][]</code> vs row-major <code>Float64Array</code>.</p>
+      </a>
+      <a class="card" href="bucket-downpour/index.html">
+        <span class="tag">Performance</span>
+        <h3>Bucket Downpour</h3>
+        <p>24k bucket inserts — nested <code>push</code> vs count + flat scatter.</p>
+      </a>
+      <a class="card" href="queue-blitz/index.html">
+        <span class="tag">Performance</span>
+        <h3>Queue Blitz</h3>
+        <p>FIFO stress — <code>shift()</code> vs power-of-two ring buffer.</p>
+      </a>
     </div>
 
     <h2>Correctness &amp; skill</h2>

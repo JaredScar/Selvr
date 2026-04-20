@@ -180,6 +180,30 @@
         <h3>Vector Bench</h3>
         <p>30k normalizes: packed <code>Float64Array</code> vs <code>Vec3[]</code> — batch linear algebra.</p>
       </a>
+      <a class="card" href="games/alloc-strike/index.html">
+        <h3>Alloc Strike</h3>
+        <p>Per-frame <code>Float64Array</code> allocation vs reused buffer — allocator &amp; GC pressure.</p>
+      </a>
+      <a class="card" href="games/path-bfs/index.html">
+        <h3>Path BFS</h3>
+        <p>BFS flood fill: <code>shift()</code> queue vs ring buffer; nested visited vs <code>Uint8Array</code>.</p>
+      </a>
+      <a class="card" href="games/count-sort-surge/index.html">
+        <h3>Count Sort Surge</h3>
+        <p>100k-key counting sort: <code>number[]</code> vs <code>Uint32Array</code> pipeline.</p>
+      </a>
+      <a class="card" href="games/matrix-core/index.html">
+        <h3>Matrix Core</h3>
+        <p>Dense 32×32 matmul: <code>number[][]</code> vs row-major <code>Float64Array</code>.</p>
+      </a>
+      <a class="card" href="games/bucket-downpour/index.html">
+        <h3>Bucket Downpour</h3>
+        <p>Spatial buckets: nested arrays + <code>push</code> vs count + <code>Int32Array</code> scatter.</p>
+      </a>
+      <a class="card" href="games/queue-blitz/index.html">
+        <h3>Queue Blitz</h3>
+        <p><code>Array.shift</code> FIFO vs O(1) ring buffer on fixed memory.</p>
+      </a>
       <a class="card" href="games/core-harvest/index.html">
         <h3>Core Harvest</h3>
         <p>Same +1 harvest: TypeScript <code>number</code> hits IEEE-754 limits; Selvr uses exact integers.</p>

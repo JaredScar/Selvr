@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orb Catcher — Selvr vs TypeScript</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161f;
+      --border: #232736;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
+      --ts: #58a6ff;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 48px;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header a.logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    header .crumb { font-size: 13px; color: var(--muted); }
+    nav { margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    nav a:hover { color: var(--text); }
+    .hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 36px 24px 24px;
+    }
+    .hero h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+    .hero p { color: var(--muted); font-size: 15px; max-width: 720px; }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 32px;
+    }
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-h {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-h.selvr { color: var(--accent); }
+    .panel-h.ts { color: var(--ts); }
+    .panel iframe {
+      width: 100%;
+      height: 520px;
+      border: none;
+      background: #010409;
+    }
+    .panel a.play {
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+    }
+    .panel a.play:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    article {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+    article h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 28px 0 12px;
+    }
+    article p, article li { color: #cbd5e1; font-size: 15px; margin-bottom: 10px; }
+    article ul { margin: 0 0 12px 1.2rem; }
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    article th, article td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    article th { background: rgba(19, 22, 31, 0.9); color: var(--text); }
+    code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="../../index.html">Docs</a>
+    <span class="crumb">Games · Orb Catcher</span>
+    <nav>
+      <a href="../core-harvest/index.html">Core Harvest</a>
+      <a href="selvr/index.html">Selvr only</a>
+      <a href="typescript/index.html">TypeScript only</a>
+      <a href="../../index.html">Docs home</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>Same game, two pipelines</h1>
+    <p>
+      <strong>Orb Catcher</strong> is the same canvas game in both panels: catch falling orbs with the paddle; miss eight and the round ends.
+      The Selvr side uses the language’s default JS backend (and shows the kind of explicit, small bundle you get from a compiler built for the web);
+      the TypeScript side is a typical <code>esbuild</code> IIFE bundle from <code>game.ts</code>.
+    </p>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="panel-h selvr">Selvr → JavaScript</div>
+      <iframe title="Selvr Orb Catcher" src="selvr/index.html"></iframe>
+      <a class="play" href="selvr/index.html">Open full page</a>
+    </div>
+    <div class="panel">
+      <div class="panel-h ts">TypeScript → JavaScript</div>
+      <iframe title="TypeScript Orb Catcher" src="typescript/index.html"></iframe>
+      <a class="play" href="typescript/index.html">Open full page</a>
+    </div>
+  </div>
+
+  <article>
+    <h2>Why Selvr for browser games</h2>
+    <p>
+      TypeScript is excellent for authoring, but types are erased when you ship. At runtime the browser still runs plain JavaScript,
+      with the same legacy semantics and a full GC. Selvr is aimed at a different end state: a sound type system that stays meaningful
+      in the compiled artifact, deterministic memory for hot paths, and (in Phase 2) bytecode so the browser does less parse and JIT work.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Topic</th>
+          <th>TypeScript (this demo)</th>
+          <th>Selvr</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Types at runtime</td>
+          <td>Stripped; <code>as</code> casts can hide real bugs.</td>
+          <td>Designed for sound types through the pipeline; no <code>typeof null === "object"</code> legacy.</td>
+        </tr>
+        <tr>
+          <td>Shipping</td>
+          <td>Source + build step; runtime is still JS semantics + GC.</td>
+          <td>Compiler-first; tree-shaken JS today, bytecode VM path for cold start and predictable performance.</td>
+        </tr>
+        <tr>
+          <td>DOM / canvas</td>
+          <td>Often optional chaining + assertions for canvas/context.</td>
+          <td><code>Option</code>-style APIs (<code>.unwrap()</code> in source) encourage explicit handling instead of silent <code>undefined</code>.</td>
+        </tr>
+        <tr>
+          <td>Frame pacing</td>
+          <td>GC and JS engine heuristics can add jitter.</td>
+          <td>Ownership model avoids GC pauses in engine code (see project roadmap).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Source</h2>
+    <ul>
+      <li><code>selvr/game.self</code> — Selvr source (build with <code>selvr build</code> when the toolchain compiles this file).</li>
+      <li><code>selvr/game.js</code> — Runnable bundle aligned with that source; replace with compiler output when available.</li>
+      <li><code>typescript/game.ts</code> — TypeScript source; rebuild with <code>npx esbuild game.ts --bundle --format=iife --outfile=game.js</code>.</li>
+    </ul>
+  </article>
+</body>
+</html>

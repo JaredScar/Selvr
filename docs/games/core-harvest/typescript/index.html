@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Harvest — TypeScript</title>
+  <style>
+    body { margin: 0; min-height: 100vh; background: #0d1117; color: #e6edf3; font-family: ui-monospace, system-ui, sans-serif; padding: 28px 20px; max-width: 520px; margin-inline: auto; }
+    h1 { font-size: 1rem; color: #58a6ff; margin: 0 0 8px; }
+    p { color: #8b949e; font-size: 0.8rem; line-height: 1.55; margin-bottom: 16px; }
+    .mass { font-size: 1.35rem; font-weight: 700; color: #f0f6fc; margin: 8px 0; word-break: break-all; }
+    .truth { font-size: 0.95rem; color: #79c0ff; margin-top: 12px; }
+    .warn { background: rgba(248,81,73,.12); border: 1px solid rgba(248,81,73,.35); color: #ffa198; padding: 12px; border-radius: 8px; font-size: 0.8rem; margin-top: 16px; }
+    button { background: #58a6ff; color: #0d1117; border: none; padding: 12px 22px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.95rem; margin-top: 8px; }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .meta { font-size: 0.75rem; color: #6e7681; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>TypeScript — mass stored as <code style="color:#58a6ff">number</code></h1>
+  <p>
+    Each harvest adds <strong>+1</strong> to core mass. JavaScript’s <code>number</code> is IEEE-754:
+    above <code>2^53 − 1</code>, not every integer exists — so your total can silently stop matching reality.
+  </p>
+  <p>Harvests: <span id="harvest-count">0</span></p>
+  <button type="button" id="harvest">Harvest +1</button>
+  <div class="mass" id="mass-display">—</div>
+  <p class="truth">Correct total (BigInt, shown for comparison): <span id="truth-display">—</span></p>
+  <div class="warn" id="precision-warning" hidden>
+    <strong>Precision loss:</strong> the <code>number</code> total no longer matches the true integer total.
+    TypeScript’s type system does not fix this — types are erased, and <code>number</code> is still a double.
+  </div>
+  <p class="meta">Starts near <code>MAX_SAFE_INTEGER</code> so the wall appears in a few clicks.</p>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

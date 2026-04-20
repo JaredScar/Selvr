@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Harvest — Selvr</title>
+  <style>
+    body { margin: 0; min-height: 100vh; background: #0d1117; color: #e6edf3; font-family: ui-monospace, system-ui, sans-serif; padding: 28px 20px; max-width: 520px; margin-inline: auto; }
+    h1 { font-size: 1rem; color: #00d4aa; margin: 0 0 8px; }
+    p { color: #8b949e; font-size: 0.8rem; line-height: 1.55; margin-bottom: 16px; }
+    .mass { font-size: 1.35rem; font-weight: 700; color: #00d4aa; margin: 8px 0; word-break: break-all; }
+    .ok { background: rgba(0,212,170,.1); border: 1px solid rgba(0,212,170,.3); color: #6ee7b7; padding: 12px; border-radius: 8px; font-size: 0.8rem; margin-top: 16px; }
+    button { background: #00d4aa; color: #0d1117; border: none; padding: 12px 22px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.95rem; margin-top: 8px; }
+    button:hover { filter: brightness(1.05); }
+    .meta { font-size: 0.75rem; color: #6e7681; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Selvr — mass as exact integer (<code style="color:#00d4aa">i64</code> / BigInt)</h1>
+  <p>
+    Each harvest adds <strong>+1</strong>. Integers are exact: there is no IEEE-754 wall at
+    <code>2^53 − 1</code>. The language is designed so economy, scores, and seeds can use
+    fixed-width integers without silent rounding.
+  </p>
+  <p>Harvests: <span id="harvest-count">0</span></p>
+  <button type="button" id="harvest">Harvest +1</button>
+  <div class="mass" id="mass-display">—</div>
+  <div class="ok">
+    <strong>No drift:</strong> what you see is the true total. No parallel “reference” column needed —
+    this is the kind of semantics Selvr targets for web programs (see README: sound types end-to-end).
+  </div>
+  <p class="meta">Same starting point as the TypeScript demo for a fair comparison.</p>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Harvest — integers vs TypeScript number</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161f;
+      --border: #232736;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
+      --ts: #58a6ff;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; padding-bottom: 48px; }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header a.logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    header .crumb { font-size: 13px; color: var(--muted); }
+    nav { margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    nav a:hover { color: var(--text); }
+    .hero { max-width: 880px; margin: 0 auto; padding: 36px 24px 20px; }
+    .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .hero p { color: var(--muted); font-size: 15px; max-width: 720px; }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 28px;
+    }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-h { padding: 12px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+    .panel-h.selvr { color: var(--accent); }
+    .panel-h.ts { color: var(--ts); }
+    .panel iframe { width: 100%; height: 560px; border: none; background: #0d1117; }
+    .panel a.play {
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+    }
+    .panel a.play:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    article { max-width: 880px; margin: 0 auto; padding: 0 24px 40px; }
+    article h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 24px 0 12px; }
+    article p, article li { color: #cbd5e1; font-size: 15px; margin-bottom: 10px; }
+    article ul { margin: 0 0 12px 1.2rem; }
+    article table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+    article th, article td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+    article th { background: rgba(19, 22, 31, 0.9); color: var(--text); }
+    code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="../../index.html">Docs</a>
+    <span class="crumb">Games · Core Harvest</span>
+    <nav>
+      <a href="selvr/index.html">Selvr only</a>
+      <a href="typescript/index.html">TypeScript only</a>
+      <a href="../orb-catcher/index.html">Orb Catcher</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>Why TypeScript hits a wall here</h1>
+    <p>
+      <strong>Core Harvest</strong> is the same mechanic on both sides: start just below
+      <code>Number.MAX_SAFE_INTEGER</code> and add <strong>+1</strong> per harvest.
+      In JavaScript, <code>number</code> is an IEEE-754 double — not every integer exists above
+      <code>2<sup>53</sup> − 1</code>, so increments stop changing the stored value while the true count keeps going.
+      <strong>TypeScript does not fix this</strong>: types are erased, and <code>number</code> is still a double at runtime.
+      <code>bigint</code> exists, but mixing it with <code>number</code>, JSON, and most APIs is awkward; games often still use <code>number</code> and silently break.
+    </p>
+    <p>
+      <strong>Selvr</strong> is aimed at <strong>sound integer semantics</strong> (e.g. <code>i64</code>) for this kind of logic — exact arithmetic without floating-point surprises, aligned with the bytecode VM story in the README.
+    </p>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="panel-h selvr">Selvr — integer mass</div>
+      <iframe title="Selvr Core Harvest" src="selvr/index.html"></iframe>
+      <a class="play" href="selvr/index.html">Open full page</a>
+    </div>
+    <div class="panel">
+      <div class="panel-h ts">TypeScript — <code>number</code> mass</div>
+      <iframe title="TypeScript Core Harvest" src="typescript/index.html"></iframe>
+      <a class="play" href="typescript/index.html">Open full page</a>
+    </div>
+  </div>
+
+  <article>
+    <h2>What to watch</h2>
+    <ul>
+      <li><strong>TypeScript:</strong> after a couple of harvests, the big number on top <strong>stops increasing</strong> while “Correct total (BigInt)” keeps going — that gap is real precision loss, not a UI bug.</li>
+      <li><strong>Selvr:</strong> mass uses <code>BigInt</code> here to mirror exact integer codegen; every +1 is exact.</li>
+    </ul>
+
+    <h2>Summary</h2>
+    <table>
+      <thead>
+        <tr><th></th><th>TypeScript</th><th>Selvr (design target)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Large integers</td>
+          <td><code>number</code> is a double; unsafe above 2<sup>53</sup>−1. <code>bigint</code> is opt-in and clunky at boundaries.</td>
+          <td>Fixed-width integers (<code>i64</code>, etc.) for exact economy / scores / seeds.</td>
+        </tr>
+        <tr>
+          <td>Types help?</td>
+          <td>Compile-time only; <code>number</code> is still a double after emit.</td>
+          <td>Sound types through the pipeline toward VM / bytecode.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Source</h2>
+    <ul>
+      <li><code>typescript/game.ts</code> — rebuild: <code>npx esbuild game.ts --bundle --format=esm --outfile=game.js</code></li>
+      <li><code>selvr/game.self</code> — conceptual Selvr source; <code>selvr/game.js</code> runs today.</li>
+    </ul>
+  </article>
+</body>
+</html>

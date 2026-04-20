@@ -67,7 +67,7 @@
   <div class="wrap">
     <h1>Games &amp; interactive demos</h1>
     <p class="lead">
-      <strong>Performance</strong> demos compare idiomatic TypeScript with <strong>Selvr-style</strong> data layouts (<code>TypedArray</code>, struct-of-arrays) or with real <strong>WebAssembly</strong> kernels plus a JavaScript shell — mirroring Selvr’s hybrid WASM/JS targeting. TypeScript itself always runs as JavaScript in the browser unless you add another toolchain.
+      <strong>Performance</strong> demos compare idiomatic TypeScript with <strong>Selvr-style</strong> data layouts (<code>TypedArray</code>, struct-of-arrays) or with real <strong>WebAssembly</strong> kernels plus a JavaScript shell — mirroring Selvr’s hybrid WASM/JS targeting. That split matters because <strong>TypeScript always lowers to JavaScript</strong> in the browser: hot loops stay in the JS engine unless you bolt on WASM yourself. Selvr is designed to route compute-heavy kernels to WASM automatically while DOM and glue stay in JS.
       <strong>Correctness</strong> demos highlight integer precision. All run in static GitHub Pages builds.
     </p>
 
@@ -84,6 +84,24 @@
         <h3>Fib Rush</h3>
         <p>25k× iterative <code>fib(35)</code> per frame — <code>i32</code> WASM loop vs JavaScript.</p>
         <p class="card-why"><strong>vs TypeScript (JS only):</strong> same algorithm, different tier — WASM gives a compact integer loop without JS semantics overhead; compare compute ms/frame on the two panels.</p>
+      </a>
+      <a class="card" href="wasm-sum-tide/index.html">
+        <span class="tag">Performance</span><span class="tag wasm">WASM</span>
+        <h3>Sum Tide</h3>
+        <p>400× sum of 8k <code>f64</code>s per frame — WASM reduction vs JS loop (same random fill).</p>
+        <p class="card-why"><strong>vs TypeScript (JS only):</strong> memory-bandwidth reduction kernels map cleanly to WASM; TS stays JS-only unless you add a second compiler.</p>
+      </a>
+      <a class="card" href="wasm-saxpy-surge/index.html">
+        <span class="tag">Performance</span><span class="tag wasm">WASM</span>
+        <h3>Saxpy Surge</h3>
+        <p>100× <code>y += a·x</code> on length-4k vectors — BLAS-style loop in WASM vs JavaScript.</p>
+        <p class="card-why"><strong>vs TypeScript (JS only):</strong> classic fused multiply-add sweep; Selvr’s story is auto-routing this shape to WASM while UI code remains JS.</p>
+      </a>
+      <a class="card" href="wasm-int-dot-beam/index.html">
+        <span class="tag">Performance</span><span class="tag wasm">WASM</span>
+        <h3>Int Dot Beam</h3>
+        <p>500× <code>i32</code> dot product on 8k elements — WASM <code>i32</code> ops vs JS <code>number</code> path.</p>
+        <p class="card-why"><strong>vs TypeScript (JS only):</strong> fixed-width integer math in WASM vs IEEE doubles in JS; highlights hybrid targeting for integer-heavy inner loops.</p>
       </a>
     </div>
 

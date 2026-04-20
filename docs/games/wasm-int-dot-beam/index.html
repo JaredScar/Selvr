@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Int Dot Beam — WASM vs JS</title>
+  <style>
+    :root { --bg: #0d0f14; --surface: #13161f; --border: #232736; --accent: #00d4aa; --accent2: #7c6af7; --wasm: #4ade80; --ts: #58a6ff; --text: #e2e8f0; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; padding-bottom: 48px; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    header a.logo { font-size: 18px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+    header .crumb { font-size: 13px; color: var(--muted); }
+    nav { margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    nav a:hover { color: var(--text); }
+    .hero { max-width: 900px; margin: 0 auto; padding: 36px 24px 20px; }
+    .hero h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .hero p { color: var(--muted); font-size: 15px; max-width: 760px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1200px; margin: 0 auto; padding: 0 20px 28px; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .panel-h { padding: 12px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+    .panel-h.selvr { color: var(--wasm); }
+    .panel-h.ts { color: var(--ts); }
+    .panel iframe { width: 100%; height: 320px; border: none; background: #010409; }
+    .panel a.play { padding: 10px 16px; text-align: center; font-size: 13px; color: var(--muted); text-decoration: none; border-top: 1px solid var(--border); }
+    .panel a.play:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    article { max-width: 900px; margin: 0 auto; padding: 0 24px 40px; }
+    article h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 24px 0 12px; }
+    article p { color: #cbd5e1; font-size: 15px; margin-bottom: 10px; }
+    code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="../../index.html">Docs</a>
+    <span class="crumb">Games · Int Dot Beam</span>
+    <nav>
+      <a href="selvr/index.html">WASM + JS</a>
+      <a href="typescript/index.html">TypeScript (JS only)</a>
+      <a href="../index.html">All games</a>
+    </nav>
+  </header>
+  <div class="hero">
+    <h1>Integer dot product: WASM vs JavaScript</h1>
+    <p>
+      <strong>500</strong> rounds per frame: randomize two length-<strong>8&nbsp;192</strong> <code>i32</code> vectors in linear memory, then compute Σ <code>a[i]*b[i]</code> with 32-bit wrapping. The WASM side runs the inner loop as a native <code>i32</code> kernel; TypeScript runs the same arithmetic as JavaScript <code>number</code> semantics on the right — illustrating how Selvr can keep integer-heavy work in WASM while TS stays on the JS tier by default.
+    </p>
+  </div>
+  <div class="split">
+    <div class="panel">
+      <div class="panel-h selvr">WASM compute + JS shell</div>
+      <iframe title="WASM int dot beam" src="selvr/index.html"></iframe>
+      <a class="play" href="selvr/index.html">Open full page</a>
+    </div>
+    <div class="panel">
+      <div class="panel-h ts">TypeScript → JavaScript only</div>
+      <iframe title="TypeScript int dot beam" src="typescript/index.html"></iframe>
+      <a class="play" href="typescript/index.html">Open full page</a>
+    </div>
+  </div>
+  <article>
+    <h2>Selvr vs TypeScript</h2>
+    <p>
+      For fixed-width integer pipelines, WASM matches machine semantics directly. TypeScript always targets JavaScript’s <code>number</code> model on this path unless you introduce another compiler. Selvr’s hybrid split is meant to automate “integer/float kernel → WASM, glue → JS” so you are not forced to choose between ergonomics and a second toolchain for every hot loop.
+    </p>
+    <h2>Rebuild TypeScript bundle</h2>
+    <p><code>npx esbuild game.ts --bundle --format=esm --outfile=game.js</code> from <code>typescript/</code></p>
+  </article>
+</body>
+</html>

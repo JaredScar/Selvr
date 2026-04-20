@@ -234,6 +234,21 @@
         <p>25k× <code>fib(35)</code> per frame: WASM integer loop vs JavaScript.</p>
         <p class="card-why"><strong>vs TypeScript:</strong> same algorithm, different execution tier — compare compute ms on the two panels.</p>
       </a>
+      <a class="card" href="games/wasm-sum-tide/index.html">
+        <h3>Sum Tide</h3>
+        <p>Many f64 reductions per frame: WASM vs JavaScript-only (TypeScript).</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> hybrid WASM+JS vs JS-only hot path — Selvr can place reductions in WASM automatically.</p>
+      </a>
+      <a class="card" href="games/wasm-saxpy-surge/index.html">
+        <h3>Saxpy Surge</h3>
+        <p>Level-1 BLAS-style <code>y += a·x</code>: WASM kernel vs TS→JS.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> fused multiply-add sweep is a prime WASM target; TS alone stays in the JS engine.</p>
+      </a>
+      <a class="card" href="games/wasm-int-dot-beam/index.html">
+        <h3>Int Dot Beam</h3>
+        <p>Integer dot products: WASM <code>i32</code> loop vs JavaScript <code>number</code> math.</p>
+        <p class="card-why"><strong>vs TypeScript:</strong> native integer tier vs JS doubles — illustrates why hybrid split matters for tight loops.</p>
+      </a>
       <a class="card" href="games/particle-storm/index.html">
         <h3>Particle Storm</h3>
         <p>48k particles: struct-of-arrays (Selvr-style) vs heap objects — FPS &amp; physics time.</p>

@@ -1,0 +1,28 @@
+﻿[package]
+name        = "selvr-cli"
+description = "The `SELVR` command-line tool"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[[bin]]
+name = "selvr"
+path = "src/main.rs"
+
+[dependencies]
+selvr-lexer       = { path = "../selvr-lexer" }
+selvr-parser      = { path = "../selvr-parser" }
+selvr-typechecker = { path = "../selvr-typechecker" }
+selvr-codegen     = { path = "../selvr-codegen" }
+selvr-ir          = { path = "../selvr-ir" }
+selvr-target      = { path = "../selvr-target" }
+selvr-bridge      = { path = "../selvr-bridge" }
+selvr-pkg         = { path = "../selvr-pkg" }
+selvr-fmt         = { path = "../selvr-fmt" }
+selvr-lint        = { path = "../selvr-lint" }
+clap              = { workspace = true }
+serde_json        = { workspace = true }
+miette            = { workspace = true }
+thiserror         = { workspace = true }
+anyhow            = { workspace = true }

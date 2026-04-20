@@ -1,0 +1,166 @@
+{
+  "name": "selvr",
+  "displayName": "Selvr",
+  "description": "Selvr language support — syntax highlighting, completions, hover, diagnostics, formatting, and WASM/JS targeting annotations.",
+  "version": "0.1.0",
+  "publisher": "selvr-lang",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/selvr-lang/selvr"
+  },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages", "Linters", "Formatters", "Debuggers"],
+  "keywords": ["selvr", "wasm", "webassembly", "web"],
+
+  "activationEvents": ["onLanguage:selvr"],
+
+  "main": "./dist/extension.js",
+
+  "contributes": {
+    "languages": [
+      {
+        "id": "selvr",
+        "aliases": ["Selvr", "selvr"],
+        "extensions": [".self"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/selvr-light.png",
+          "dark":  "./icons/selvr-dark.png"
+        }
+      }
+    ],
+
+    "grammars": [
+      {
+        "language":  "selvr",
+        "scopeName": "source.selvr",
+        "path":      "./syntaxes/selvr.tmLanguage.json"
+      }
+    ],
+
+    "configuration": {
+      "title": "Selvr",
+      "properties": {
+        "selvr.serverPath": {
+          "type":        "string",
+          "default":     "selvr-lsp",
+          "description": "Path to the `selvr-lsp` binary. Defaults to the one found on PATH."
+        },
+        "selvr.trace.server": {
+          "type":    "string",
+          "enum":    ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace LSP communication in the Output panel."
+        },
+        "selvr.showTargetAnnotations": {
+          "type":        "boolean",
+          "default":     true,
+          "description": "Show ⚙/⚡ inline decorations indicating which runtime each function targets."
+        }
+      }
+    },
+
+    "commands": [
+      {
+        "command":   "selvr.restartServer",
+        "title":     "Selvr: Restart Language Server",
+        "category":  "Selvr"
+      },
+      {
+        "command":   "selvr.showTargetMap",
+        "title":     "Selvr: Show WASM/JS Target Map",
+        "category":  "Selvr"
+      },
+      {
+        "command":   "selvr.formatDocument",
+        "title":     "Selvr: Format Document",
+        "category":  "Selvr"
+      }
+    ],
+
+    "menus": {
+      "editor/context": [
+        {
+          "command": "selvr.showTargetMap",
+          "when":    "resourceExtname == .self",
+          "group":   "selvr"
+        }
+      ]
+    },
+
+    "debuggers": [
+      {
+        "type":          "selvr",
+        "label":         "Selvr Debug",
+        "runtime":       "node",
+        "program":       "./dist/debugAdapter.js",
+        "languages":     ["selvr"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": {
+                "type":        "string",
+                "description": "Path to the .self file to debug.",
+                "default":     "${file}"
+              },
+              "stopOnEntry": {
+                "type":        "boolean",
+                "description": "Pause at the first line on launch.",
+                "default":     false
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type":         "selvr",
+            "request":      "launch",
+            "name":         "Debug Selvr",
+            "program":      "${file}",
+            "stopOnEntry":  false
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label":       "Selvr: Launch",
+            "description": "Debug the current .self file",
+            "body": {
+              "type":    "selvr",
+              "request": "launch",
+              "name":    "Debug Selvr",
+              "program": "^\"\\${file}\""
+            }
+          }
+        ]
+      }
+    ],
+
+    "snippets": [
+      {
+        "language": "selvr",
+        "path":     "./snippets/selvr.json"
+      }
+    ]
+  },
+
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build":   "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify",
+    "watch":   "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
+    "package": "npx vsce package"
+  },
+
+  "devDependencies": {
+    "@types/vscode":    "^1.85.0",
+    "@types/node":      "^18.0.0",
+    "typescript":       "^5.3.0",
+    "esbuild":          "^0.20.0",
+    "@vscode/vsce":     "^2.23.0"
+  },
+
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

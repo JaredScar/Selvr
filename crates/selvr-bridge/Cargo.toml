@@ -1,0 +1,15 @@
+[package]
+name        = "selvr-bridge"
+description = "Selvr WASM/JS bridge code generator — produces the glue that wires the two runtimes together."
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[dependencies]
+selvr-target  = { path = "../selvr-target" }
+selvr-ir      = { path = "../selvr-ir" }
+selvr-parser  = { path = "../selvr-parser" }
+smol_str      = { workspace = true }
+indexmap      = { workspace = true }

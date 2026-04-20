@@ -1,0 +1,16 @@
+[package]
+name        = "selvr-target"
+description = "Selvr compile-time WASM/JS targeting analysis and call-graph propagation."
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[dependencies]
+selvr-ir      = { path = "../selvr-ir" }
+selvr-parser  = { path = "../selvr-parser" }
+selvr-lexer   = { path = "../selvr-lexer" }
+smol_str      = { workspace = true }
+indexmap      = { workspace = true }
+thiserror     = { workspace = true }

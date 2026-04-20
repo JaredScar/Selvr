@@ -1,0 +1,17 @@
+[package]
+name        = "selvr-lint"
+description = "Static analysis and linting rules for Selvr source code."
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[dependencies]
+selvr-parser = { path = "../selvr-parser" }
+selvr-lexer  = { path = "../selvr-lexer" }
+selvr-ir     = { path = "../selvr-ir" }
+selvr-target = { path = "../selvr-target" }
+smol_str     = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }

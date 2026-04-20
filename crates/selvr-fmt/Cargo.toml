@@ -1,0 +1,14 @@
+[package]
+name        = "selvr-fmt"
+description = "Canonical pretty-printer / formatter for Selvr source code."
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+authors.workspace    = true
+
+[dependencies]
+selvr-parser = { path = "../selvr-parser" }
+selvr-lexer  = { path = "../selvr-lexer" }
+smol_str     = { workspace = true }
+thiserror    = { workspace = true }

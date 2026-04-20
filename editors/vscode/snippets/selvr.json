@@ -1,0 +1,87 @@
+{
+  "Function": {
+    "prefix": "fn",
+    "body": ["fn ${1:name}(${2:params}): ${3:void} {", "\t${0}", "}"],
+    "description": "Define a function"
+  },
+  "Async Function": {
+    "prefix": "afn",
+    "body": ["async fn ${1:name}(${2:params}): ${3:void} {", "\t${0}", "}"],
+    "description": "Define an async function"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": ["struct ${1:Name} {", "\t${2:field}: ${3:Type},", "}"],
+    "description": "Define a struct"
+  },
+  "Enum": {
+    "prefix": "enum",
+    "body": ["enum ${1:Name} {", "\t${2:Variant},", "}"],
+    "description": "Define an enum"
+  },
+  "Trait": {
+    "prefix": "trait",
+    "body": ["trait ${1:Name} {", "\tfn ${2:method}(${3:params}): ${4:void};", "}"],
+    "description": "Define a trait"
+  },
+  "Impl": {
+    "prefix": "impl",
+    "body": ["impl ${1:Type} {", "\tfn ${2:method}(${3:params}): ${4:void} {", "\t\t${0}", "\t}", "}"],
+    "description": "Implement methods on a type"
+  },
+  "Main function": {
+    "prefix": "main",
+    "body": ["fn main(): void {", "\t${0}", "}"],
+    "description": "Entry point function"
+  },
+  "WASM function": {
+    "prefix": "wasm",
+    "body": ["#[wasm]", "fn ${1:name}(${2:params}): ${3:i32} {", "\t${0}", "}"],
+    "description": "Force WASM-targeted function"
+  },
+  "JS function": {
+    "prefix": "jsfn",
+    "body": ["#[js]", "fn ${1:name}(${2:params}): ${3:void} {", "\t${0}", "}"],
+    "description": "Force JS-targeted function"
+  },
+  "Test function": {
+    "prefix": "test",
+    "body": ["#[test]", "fn ${1:test_name}(): void {", "\tconst result = ${2:expr};", "\tif result != ${3:expected} {", "\t\tthrow new Error(`expected ${3:expected}, got ${2:result}`);", "\t}", "}"],
+    "description": "Define a test function"
+  },
+  "If statement": {
+    "prefix": "if",
+    "body": ["if ${1:condition} {", "\t${0}", "}"],
+    "description": "If statement"
+  },
+  "If-else": {
+    "prefix": "ife",
+    "body": ["if ${1:condition} {", "\t${2}", "} else {", "\t${0}", "}"],
+    "description": "If-else statement"
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": ["while ${1:condition} {", "\t${0}", "}"],
+    "description": "While loop"
+  },
+  "For loop": {
+    "prefix": "for",
+    "body": ["let ${1:i} = 0;", "while ${1:i} < ${2:n} {", "\t${0}", "\t${1:i} += 1;", "}"],
+    "description": "For loop using while (Selvr idiom)"
+  },
+  "Match": {
+    "prefix": "match",
+    "body": ["match ${1:expr} {", "\t${2:Pattern} => ${3:result},", "\t_ => ${0},", "}"],
+    "description": "Pattern match"
+  },
+  "Import": {
+    "prefix": "import",
+    "body": ["import { ${1:Symbol} } from \"${2:module}\";"],
+    "description": "Import statement"
+  },
+  "Console log": {
+    "prefix": "log",
+    "body": ["console.log(${1:expr});"],
+    "description": "console.log"
+  }
+}

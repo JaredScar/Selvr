@@ -1,0 +1,48 @@
+[workspace]
+members = [
+    "crates/selvr-lexer",
+    "crates/selvr-parser",
+    "crates/selvr-typechecker",
+    "crates/selvr-codegen",
+    "crates/selvr-ir",
+    "crates/selvr-bytecode",
+    "crates/selvr-vm",
+    "crates/selvr-target",
+    "crates/selvr-bridge",
+    "crates/selvr-pkg",
+    # Phase 3.3 — developer tools
+    "crates/selvr-fmt",
+    "crates/selvr-lint",
+    "crates/selvr-lsp",
+    "crates/selvr-dap",
+    "crates/selvr-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version     = "0.1.0"
+edition     = "2021"
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/selvr-lang/selvr"
+authors     = ["The Selvr Authors"]
+
+[workspace.dependencies]
+# Shared deps — pin versions here, reference with { workspace = true } in crates
+logos        = "0.14"
+chumsky      = "0.9"
+ariadne      = "0.4"
+clap         = { version = "4", features = ["derive"] }
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+thiserror    = "1"
+miette       = { version = "5", features = ["fancy"] }
+smol_str     = "0.2"
+indexmap     = "2"
+anyhow       = "1"
+toml         = "0.8"
+semver       = "1"
+sha2         = "0.10"
+hex          = "0.4"
+# Phase 3.3 — LSP / DAP
+lsp-server   = "0.7"
+lsp-types    = { version = "0.97", features = ["proposed"] }

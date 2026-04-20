@@ -1,0 +1,16 @@
+[package]
+name        = "selvr-codegen"
+description = "Code generator: Selvr AST → JavaScript (Phase 1) / bytecode (Phase 2)"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+selvr-lexer       = { path = "../selvr-lexer" }
+selvr-parser      = { path = "../selvr-parser" }
+selvr-typechecker = { path = "../selvr-typechecker" }
+smol_str          = { workspace = true }
+indexmap          = { workspace = true }
+miette            = { workspace = true }
+thiserror         = { workspace = true }

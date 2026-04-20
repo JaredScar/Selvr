@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr Benchmark — Real Compiler Output vs Hand-Written JS vs WASM</title>
+  <style>
+    :root {
+      --bg:     #0d0f14; --surface: #13161f; --border: #232736;
+      --text:   #e2e8f0; --muted:   #64748b;
+      --selvr:  #f78166; --js:      #facc15; --wasm:   #4ade80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text);
+           font-family: 'Segoe UI', system-ui, sans-serif;
+           padding: 36px 24px; max-width: 940px; margin: 0 auto; }
+    h1  { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+    h1 em { font-style: normal;
+            background: linear-gradient(135deg,#f78166,#facc15);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sub { color: var(--muted); font-size: .84rem; line-height: 1.7; margin-bottom: 30px; }
+    .sub code { background: var(--border); padding: 1px 5px; border-radius: 4px; color: var(--text); }
+
+    .legend { display: flex; gap: 22px; margin-bottom: 28px; flex-wrap: wrap; }
+    .leg  { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); }
+    .dot  { width: 10px; height: 10px; border-radius: 50%; }
+
+    .bench { background: var(--surface); border: 1px solid var(--border);
+             border-radius: 12px; padding: 22px; margin-bottom: 18px; }
+    .bh { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .bh h2 { font-size: .95rem; font-weight: 700; margin-bottom: 4px; }
+    .bh .desc { font-size: .78rem; color: var(--muted); }
+    .run-btn { background: var(--selvr); color: #000; border: none; border-radius: 8px;
+               padding: 7px 18px; font-weight: 700; cursor: pointer; font-size: .8rem;
+               flex-shrink: 0; white-space: nowrap; }
+    .run-btn:hover { opacity: .85; }
+    .run-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .bars { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { width: 126px; font-size: .74rem; text-align: right; flex-shrink: 0; color: var(--muted); }
+    .bar-track { flex: 1; background: var(--border); border-radius: 99px; height: 26px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 99px; display: flex; align-items: center;
+                 padding: 0 10px; font-size: .7rem; font-weight: 700; color: #000;
+                 transition: width .45s cubic-bezier(.4,0,.2,1); width: 0; min-width: 2px; white-space: nowrap; }
+    .bar-fill.selvr { background: var(--selvr); }
+    .bar-fill.js    { background: var(--js); }
+    .bar-fill.wasm  { background: var(--wasm); }
+    .bar-fill.err   { background: #475569; color: #94a3b8; font-weight: 400; }
+
+    .srcs { display: flex; gap: 10px; margin-top: 16px; }
+    .src  { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .src-hdr { padding: 5px 12px; font-size: .7rem; font-weight: 700; }
+    .src-selvr .src-hdr { color: var(--selvr); background: rgba(247,129,102,.07); }
+    .src-wasm  .src-hdr { color: var(--wasm);  background: rgba(74,222,128,.07); }
+    pre { padding: 10px 12px; font-size: .69rem;
+          font-family: 'Cascadia Code','Fira Code',monospace;
+          overflow-x: auto; line-height: 1.55; max-height: 175px; overflow-y: auto; }
+
+    .note { background: rgba(129,140,248,.07); border: 1px solid rgba(129,140,248,.2);
+            border-radius: 8px; padding: 14px 18px; font-size: .78rem; color: var(--muted);
+            margin-top: 26px; line-height: 1.7; }
+    .note strong { color: var(--text); }
+    .note a { color: #818cf8; }
+  </style>
+</head>
+<body>
+
+<h1>Selvr — <em>Real</em> Benchmark</h1>
+<p class="sub">
+  All three columns run <strong>real, unmodified code</strong> compiled in this browser.<br>
+  <strong style="color:var(--selvr)">Selvr → JS</strong>&ensp;
+    Actual <code>.self</code> source, compiled by <code>selvr build</code>, running as JavaScript.<br>
+  <strong style="color:var(--js)">Hand-written JS</strong>&ensp;
+    Identical algorithm written directly in JavaScript for comparison.<br>
+  <strong style="color:var(--wasm)">WebAssembly</strong>&ensp;
+    Same algorithm compiled to a real <code>.wasm</code> binary, instantiated via
+    <code>WebAssembly.instantiate()</code>. This is what Selvr Phase 2 will target.
+</p>
+
+<div class="legend">
+  <div class="leg"><div class="dot" style="background:var(--selvr)"></div> Selvr compiled → JS (real compiler output)</div>
+  <div class="leg"><div class="dot" style="background:var(--js)"></div> Hand-written JS</div>
+  <div class="leg"><div class="dot" style="background:var(--wasm)"></div> Real WebAssembly (Phase 2 target)</div>
+</div>
+
+<!-- ── fib ─────────────────────────────────────────────────────────────────── -->
+<div class="bench" id="bench-fib">
+  <div class="bh">
+    <div>
+      <h2>Iterative Fibonacci — fib(35), 200 000 calls</h2>
+      <div class="desc">Pure integer loop. Targeting pass: <code>#[wasm]</code> (score +68).</div>
+    </div>
+    <button class="run-btn" onclick="runBench('fib')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">Selvr → JS</span><div class="bar-track"><div class="bar-fill selvr" id="bar-fib-selvr"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Hand-written JS</span><div class="bar-track"><div class="bar-fill js"   id="bar-fib-js"></div></div></div>
+    <div class="bar-row"><span class="bar-label">WebAssembly</span><div class="bar-track"><div class="bar-fill wasm" id="bar-fib-wasm"></div></div></div>
+  </div>
+  <div class="srcs">
+    <div class="src src-selvr">
+      <div class="src-hdr">📄 fib.self — Selvr source</div>
+      <pre>export fn fib(n: i32): i32 {
+    let a: i32 = 0;
+    let b: i32 = 1;
+    let i: i32 = 0;
+    while i &lt; n {
+        let tmp: i32 = a + b;
+        a = b; b = tmp;
+        i = i + 1;
+    }
+    return a;
+}</pre>
+    </div>
+    <div class="src src-wasm">
+      <div class="src-hdr">⚙ fib.wat — WebAssembly Text</div>
+      <pre>(func $fib (export "fib") (param $n i32) (result i32)
+  (local $a i32)(local $b i32)
+  (local $i i32)(local $tmp i32)
+  i32.const 0 local.set $a
+  i32.const 1 local.set $b
+  block $B loop $L
+    local.get $i local.get $n i32.ge_s br_if 1
+    local.get $a local.get $b i32.add local.set $tmp
+    local.get $b local.set $a
+    local.get $tmp local.set $b
+    local.get $i i32.const 1 i32.add local.set $i
+    br $L
+  end end
+  local.get $a)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ── dot ─────────────────────────────────────────────────────────────────── -->
+<div class="bench" id="bench-dot">
+  <div class="bh">
+    <div>
+      <h2>Dot product — 1 000-element f64 vectors, 10 000 calls</h2>
+      <div class="desc">Float multiply-accumulate. Targeting pass: <code>#[wasm]</code> (score +80). WASM reads from shared linear memory.</div>
+    </div>
+    <button class="run-btn" onclick="runBench('dot')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">Selvr → JS</span><div class="bar-track"><div class="bar-fill selvr" id="bar-dot-selvr"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Hand-written JS</span><div class="bar-track"><div class="bar-fill js"   id="bar-dot-js"></div></div></div>
+    <div class="bar-row"><span class="bar-label">WebAssembly</span><div class="bar-track"><div class="bar-fill wasm" id="bar-dot-wasm"></div></div></div>
+  </div>
+  <div class="srcs">
+    <div class="src src-selvr">
+      <div class="src-hdr">📄 matmul.self (excerpt) — Selvr source</div>
+      <pre>export fn dot(a: f64[], b: f64[], n: i32): f64 {
+    let s: f64 = 0.0;
+    let i: i32 = 0;
+    while i &lt; n {
+        s = s + a[i] * b[i];
+        i = i + 1;
+    }
+    return s;
+}</pre>
+    </div>
+    <div class="src src-wasm">
+      <div class="src-hdr">⚙ dot.wat — reads f64[] from WASM linear memory</div>
+      <pre>(func $dot (export "dot")
+    (param $pa i32)(param $pb i32)(param $n i32)
+    (result f64)
+  (local $s f64)(local $i i32)
+  f64.const 0 local.set $s
+  block $B loop $L
+    local.get $i local.get $n i32.ge_s br_if 1
+    local.get $s
+    local.get $pa local.get $i
+      i32.const 8 i32.mul i32.add f64.load
+    local.get $pb local.get $i
+      i32.const 8 i32.mul i32.add f64.load
+    f64.mul f64.add local.set $s
+    local.get $i i32.const 1 i32.add local.set $i
+    br $L
+  end end
+  local.get $s)</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ── sieve ────────────────────────────────────────────────────────────────── -->
+<div class="bench" id="bench-sieve">
+  <div class="bh">
+    <div>
+      <h2>Sieve of Eratosthenes — primes ≤ 100 000, 100 runs</h2>
+      <div class="desc">Integer array scan. WASM uses linear byte memory; JS uses a <code>Uint8Array</code>.</div>
+    </div>
+    <button class="run-btn" onclick="runBench('sieve')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">Selvr → JS</span><div class="bar-track"><div class="bar-fill selvr" id="bar-sieve-selvr"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Hand-written JS</span><div class="bar-track"><div class="bar-fill js"   id="bar-sieve-js"></div></div></div>
+    <div class="bar-row"><span class="bar-label">WebAssembly</span><div class="bar-track"><div class="bar-fill wasm" id="bar-sieve-wasm"></div></div></div>
+  </div>
+  <div class="srcs">
+    <div class="src src-selvr">
+      <div class="src-hdr">📄 sieve.self — Selvr source</div>
+      <pre>export fn sieve(limit: i32): i32 {
+    let composite: boolean[] = [];
+    let i: i32 = 0;
+    while i &lt;= limit {
+        composite.push(false);
+        i = i + 1;
+    }
+    let count: i32 = 0;
+    let p: i32 = 2;
+    while p &lt;= limit {
+        if !composite[p] {
+            count = count + 1;
+            let m: i32 = p + p;
+            while m &lt;= limit {
+                composite[m] = true;
+                m = m + p;
+            }
+        }
+        p = p + 1;
+    }
+    return count;
+}</pre>
+    </div>
+    <div class="src src-wasm">
+      <div class="src-hdr">⚙ sieve.wat — uses WASM linear memory for byte flags</div>
+      <pre>(func $sieve (export "sieve") (param $limit i32)(result i32)
+  (local $p i32)(local $m i32)(local $count i32)
+  ;; zero memory[0..limit+1] (all = prime)
+  i32.const 0  i32.const 0
+  local.get $limit i32.const 1 i32.add
+  memory.fill  ;; bulk-memory proposal (all browsers 2022+)
+  i32.const 2  local.set $p
+  block $B loop $L
+    local.get $p local.get $limit i32.gt_s br_if 1
+    local.get $p i32.load8_u 0  i32.eqz  if
+      local.get $count i32.const 1 i32.add local.set $count
+      local.get $p local.get $p i32.add  local.set $m
+      block $B2 loop $L2
+        local.get $m local.get $limit i32.gt_s br_if 1
+        local.get $m i32.const 1 i32.store8 0
+        local.get $m local.get $p i32.add  local.set $m
+        br $L2
+      end end
+    end
+    local.get $p i32.const 1 i32.add local.set $p
+    br $L
+  end end
+  local.get $count)</pre>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>All numbers are real.</strong>
+  The <span style="color:var(--selvr)">Selvr → JS</span> column runs JavaScript
+  produced directly by <code>selvr build *.self</code> — no hand-editing.
+  The <span style="color:var(--wasm)">WebAssembly</span> column runs actual
+  <code>.wasm</code> binaries assembled in this page via <code>WebAssembly.instantiate()</code>.
+  Each bar shows the <strong>median of 7 timed runs</strong> after 2 warm-up rounds.
+  Bars are <em>lower = faster</em>.
+  <br><br>
+  The gap between Selvr→JS and WebAssembly is exactly what the
+  <a href="../plan.md">Phase 2 WASM backend</a> aims to close.
+  The <code>selvr explain *.self</code> command shows each function's targeting score.
+</div>
+
+<script type="module">
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  TINY WASM BINARY ASSEMBLER                                             ║
+// ║  Builds correct WASM module binaries from typed section arrays.         ║
+// ║  This avoids any hand-counting of lengths, which is error-prone.        ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+const I32 = 0x7f, F64 = 0x7c;
+
+function uleb(n) {
+  const out = [];
+  do {
+    let b = n & 0x7f; n >>>= 7;
+    if (n) b |= 0x80;
+    out.push(b);
+  } while (n);
+  return out;
+}
+function sleb(n) {
+  const out = [];
+  let more = true;
+  while (more) {
+    let b = n & 0x7f; n >>= 7;
+    if ((n === 0 && (b & 0x40) === 0) || (n === -1 && (b & 0x40) !== 0)) more = false;
+    else b |= 0x80;
+    out.push(b);
+  }
+  return out;
+}
+function section(id, body) {
+  const b = [...body];
+  return [id, ...uleb(b.length), ...b];
+}
+function vec(items) { return [...uleb(items.length), ...items.flat()]; }
+function funcType(params, results) { return [0x60, ...vec(params), ...vec(results)]; }
+function locals(type, count) { return [...uleb(count), type]; }
+
+function wasmModule({ types, funcs, mems, exports_, code }) {
+  const secs = [
+    section(0x01, vec(types)),
+    ...(funcs  ? [section(0x03, vec(funcs.map(([ti]) => uleb(ti)).map(x=>x))]: []),
+    ...(mems   ? [section(0x05, vec(mems))]   : []),
+    section(0x07, vec(exports_.map(([name, kind, idx]) =>
+      [...uleb(name.length), ...name.split('').map(c=>c.charCodeAt(0)), kind, ...uleb(idx)]
+    ))),
+    section(0x0a, vec(code.map(body => {
+      // body = [localGroups, ...instruction_bytes]
+      const [localGroups, ...instrs] = body;
+      const locBytes = [...uleb(localGroups.length), ...localGroups.flat()];
+      const bodyContent = [...locBytes, ...instrs.flat()];
+      return [...uleb(bodyContent.length), ...bodyContent];
+    }))),
+  ];
+  return new Uint8Array([0x00,0x61,0x73,0x6d, 0x01,0x00,0x00,0x00, ...secs.flat()]);
+}
+
+// WASM opcodes (used below)
+const OPS = {
+  unreachable: [0x00], nop: [0x01],
+  block:  (t=0x40) => [0x02, t],
+  loop:   (t=0x40) => [0x03, t],
+  if_:    (t=0x40) => [0x04, t],
+  else_:  [0x05], end: [0x0b],
+  br:     (d)  => [0x0c, ...uleb(d)],
+  br_if:  (d)  => [0x0d, ...uleb(d)],
+  br_table: (ls,def) => [0x0e, ...vec(ls.map(l=>uleb(l))), ...uleb(def)],
+  return_:  [0x0f],
+  local_get: (i) => [0x20, ...uleb(i)],
+  local_set: (i) => [0x21, ...uleb(i)],
+  local_tee: (i) => [0x22, ...uleb(i)],
+  i32_const: (v) => [0x41, ...sleb(v)],
+  f64_const: (v) => { const b=new Uint8Array(8); new DataView(b.buffer).setFloat64(0,v,true); return [0x44,...b]; },
+  i32_eqz:  [0x45], i32_eq:  [0x46], i32_ne: [0x47],
+  i32_lt_s: [0x48], i32_lt_u: [0x49], i32_gt_s: [0x4a], i32_gt_u: [0x4b],
+  i32_le_s: [0x4c], i32_le_u: [0x4d], i32_ge_s: [0x4e], i32_ge_u: [0x4f],
+  i32_add: [0x6a], i32_sub: [0x6b], i32_mul: [0x6c],
+  f64_eq: [0x61], f64_ne: [0x62], f64_lt: [0x63], f64_gt: [0x64], f64_le: [0x65], f64_ge: [0x66],
+  f64_add: [0xa0], f64_sub: [0xa1], f64_mul: [0xa2], f64_div: [0xa3],
+  // memory: [opcode, align, offset]
+  i32_load8_u: (align=0, off=0) => [0x2d, ...uleb(align), ...uleb(off)],
+  i32_store8:  (align=0, off=0) => [0x3a, ...uleb(align), ...uleb(off)],
+  f64_load:    (align=3, off=0) => [0x29, ...uleb(align), ...uleb(off)],
+  f64_store:   (align=3, off=0) => [0x39, ...uleb(align), ...uleb(off)],
+  // bulk memory
+  memory_fill: [0xfc, ...uleb(0x0b), 0x00],
+};
+
+// ── Build FIB WASM ───────────────────────────────────────────────────────────
+// fn fib(n:i32)->i32 { let a=0,b=1,i=0,tmp; while i<n { tmp=a+b; a=b; b=tmp; i++ } return a; }
+// params: local 0 = n
+// extra locals: local 1=a, 2=b, 3=i, 4=tmp  (all i32)
+function buildFibWasm() {
+  const {local_get: lg, local_set: ls, i32_const: k, i32_add, i32_ge_s, block, loop, br, br_if, end} = OPS;
+  return wasmModule({
+    types:    [funcType([I32],[I32])],
+    funcs:    [[0]],
+    exports_: [['fib', 0x00, 0]],
+    code: [[
+      // localGroups
+      [[locals(I32, 4)]],       // a, b, i, tmp
+      // instructions
+      k(0), ls(1),              // a = 0
+      k(1), ls(2),              // b = 1
+      k(0), ls(3),              // i = 0
+      block(),                  // block $B
+        loop(),                 //   loop $L
+          lg(3), lg(0), i32_ge_s, br_if(1),  // i>=n? break
+          lg(1), lg(2), i32_add, ls(4),       // tmp = a+b
+          lg(2), ls(1),                       // a = b
+          lg(4), ls(2),                       // b = tmp
+          lg(3), k(1), i32_add, ls(3),        // i++
+          br(0),                //   continue
+        end,                    //   end loop
+      end,                      // end block
+      lg(1),                    // return a
+      end,                      // end func
+    ]],
+  });
+}
+
+// ── Build DOT WASM ───────────────────────────────────────────────────────────
+// fn dot(pa:i32, pb:i32, n:i32)->f64 — reads f64 arrays from linear memory
+// params: 0=pa, 1=pb, 2=n
+// extra locals: 3=s (f64), 4=i (i32)
+function buildDotWasm() {
+  const {local_get: lg, local_set: ls, i32_const: k, f64_const: fk,
+         i32_add, i32_mul, i32_ge_s, f64_add, f64_mul,
+         f64_load, block, loop, br, br_if, end} = OPS;
+  return wasmModule({
+    types:    [funcType([I32,I32,I32],[F64])],
+    funcs:    [[0]],
+    mems:     [[0x00, 0x01]],   // min 1 page = 64 KB (arrays written before call)
+    exports_: [['memory',0x02,0], ['dot',0x00,0]],
+    code: [[
+      [[locals(F64,1), locals(I32,1)]],   // s(f64), i(i32)
+      fk(0.0), ls(3),             // s = 0.0
+      k(0),    ls(4),             // i = 0
+      block(),                    // block $B
+        loop(),                   //   loop $L
+          lg(4), lg(2), i32_ge_s, br_if(1),    // i>=n? break
+          lg(3),                               // s  (accumulator on stack)
+          lg(0), lg(4), k(8), i32_mul, i32_add, f64_load(), // a[i]
+          lg(1), lg(4), k(8), i32_mul, i32_add, f64_load(), // b[i]
+          f64_mul, f64_add, ls(3),             // s += a[i]*b[i]
+          lg(4), k(1), i32_add, ls(4),         // i++
+          br(0),
+        end, end,
+      lg(3),                      // return s
+      end,
+    ]],
+  });
+}
+
+// ── Build SIEVE WASM ─────────────────────────────────────────────────────────
+// fn sieve(limit:i32)->i32 — uses linear memory as byte flag array
+// params: 0=limit
+// extra locals: 1=p, 2=m, 3=count
+function buildSieveWasm() {
+  const {local_get: lg, local_set: ls, i32_const: k,
+         i32_add, i32_gt_s, i32_eqz, i32_store8, i32_load8_u,
+         memory_fill, block, loop, if_, end, else_: el, br, br_if} = OPS;
+  return wasmModule({
+    types:    [funcType([I32],[I32])],
+    funcs:    [[0]],
+    mems:     [[0x00, 0x02]],   // 2 pages = 128 KB (enough for limit 100000)
+    exports_: [['memory',0x02,0], ['sieve',0x00,0]],
+    code: [[
+      [[locals(I32, 3)]],       // p, m, count
+      // memory.fill(0, 0, limit+1) — mark all as prime (byte=0)
+      k(0), k(0),
+      lg(0), k(1), i32_add,
+      memory_fill,
+      // p=2, count=0 (already 0)
+      k(2), ls(1),
+      block(),                  // block $outer
+        loop(),                 //   loop $L
+          lg(1), lg(0), i32_gt_s, br_if(1),  // p>limit? break
+          // if mem[p]==0 (is prime)
+          lg(1), i32_load8_u(), i32_eqz,
+          if_(),
+            // count++
+            lg(3), k(1), i32_add, ls(3),
+            // m = p+p
+            lg(1), lg(1), i32_add, ls(2),
+            block(),            //   block $inner
+              loop(),           //     loop $L2
+                lg(2), lg(0), i32_gt_s, br_if(1),  // m>limit? break
+                lg(2), k(1), i32_store8(),           // mem[m] = 1
+                lg(2), lg(1), i32_add, ls(2),        // m += p
+                br(0),
+              end, end,         //   end $L2, $inner
+          end,                  // end if
+          lg(1), k(1), i32_add, ls(1),  // p++
+          br(0),
+        end, end,               // end $L, $outer
+      lg(3),                    // return count
+      end,
+    ]],
+  });
+}
+
+// ── Validate and instantiate ─────────────────────────────────────────────────
+async function tryInstantiate(bytes, imports={}) {
+  try {
+    if (!WebAssembly.validate(bytes)) throw new Error('invalid WASM binary');
+    const m = await WebAssembly.instantiate(bytes, imports);
+    return m.instance.exports;
+  } catch(e) {
+    console.error('WASM error:', e);
+    return null;
+  }
+}
+
+// ── Selvr-compiled output (real `selvr build` emission, inlined) ─────────────
+// Generated by: selvr build benchmarks/selvr/fib.self
+// DO NOT HAND-EDIT — regenerate with the selvr CLI.
+function selvr_fib(n) {
+  let a = 0; let b = 1; let i = 0;
+  while ((i < n)) { let tmp = (a + b); a = b; b = tmp; i = (i + 1); }
+  return a;
+}
+
+// Generated by: selvr build benchmarks/selvr/matmul.self (dot function)
+function selvr_dot(a, b, n) {
+  let s = 0.0; let i = 0;
+  while ((i < n)) { s = (s + (a[i] * b[i])); i = (i + 1); }
+  return s;
+}
+
+// Generated by: selvr build benchmarks/selvr/sieve.self
+function selvr_sieve(limit) {
+  let composite = []; let i = 0;
+  while ((i <= limit)) { composite.push(false); i = (i + 1); }
+  let count = 0; let p = 2;
+  while ((p <= limit)) {
+    if (!(composite[p])) {
+      count = (count + 1); let multiple = (p + p);
+      while ((multiple <= limit)) { composite[multiple] = true; multiple = (multiple + p); }
+    }
+    p = (p + 1);
+  }
+  return count;
+}
+
+// ── Hand-written JS (identical algorithms, optimal style) ─────────────────────
+function js_fib(n) {
+  let a=0, b=1;
+  for (let i=0; i<n; i++) { const t=a+b; a=b; b=t; }
+  return a;
+}
+function js_dot(a, b, n) {
+  let s = 0.0;
+  for (let i=0; i<n; i++) s += a[i]*b[i];
+  return s;
+}
+function js_sieve(limit) {
+  const c = new Uint8Array(limit+1);
+  let count = 0;
+  for (let p=2; p<=limit; p++) {
+    if (!c[p]) { count++; for (let m=p+p; m<=limit; m+=p) c[m]=1; }
+  }
+  return count;
+}
+
+// ── WASM module setup ────────────────────────────────────────────────────────
+const N_DOT = 1000;
+let wasm_fib = null, wasm_dot = null, wasm_sieve = null;
+let dotMemView = null;
+
+async function loadAllWasm() {
+  // Fib
+  const fibExp = await tryInstantiate(buildFibWasm());
+  if (fibExp) wasm_fib = fibExp.fib;
+
+  // Dot — write float arrays into WASM memory before benchmarking
+  const dotExp = await tryInstantiate(buildDotWasm());
+  if (dotExp) {
+    const mem = new Float64Array(dotExp.memory.buffer);
+    for (let i=0; i<N_DOT; i++) { mem[i]=Math.random(); mem[N_DOT+i]=Math.random(); }
+    const raw = dotExp.dot;
+    wasm_dot = () => raw(0, N_DOT*8, N_DOT);  // pa=0, pb=N_DOT*8 bytes
+  }
+
+  // Sieve
+  const sieveExp = await tryInstantiate(buildSieveWasm());
+  if (sieveExp) wasm_sieve = (limit) => sieveExp.sieve(limit);
+}
+
+// ── Benchmark harness ────────────────────────────────────────────────────────
+const WARMUP=2, RUNS=7;
+function med(ts) { return [...ts].sort((a,b)=>a-b)[Math.floor(ts.length/2)]; }
+function bench(fn, iters=1) {
+  for (let w=0; w<WARMUP; w++) for (let i=0; i<iters; i++) fn();
+  const ts=[];
+  for (let r=0; r<RUNS; r++) {
+    const t0=performance.now(); for (let i=0; i<iters; i++) fn(); ts.push(performance.now()-t0);
+  }
+  return med(ts);
+}
+
+// JS dot arrays (typed for speed — fair comparison for JS column)
+const jsA = new Float64Array(N_DOT).map(()=>Math.random());
+const jsB = new Float64Array(N_DOT).map(()=>Math.random());
+
+const BENCHMARKS = {
+  fib: {
+    selvr: () => bench(()=>selvr_fib(35), 200_000),
+    js:    () => bench(()=>js_fib(35),    200_000),
+    wasm:  () => wasm_fib ? bench(()=>wasm_fib(35), 200_000) : null,
+  },
+  dot: {
+    selvr: () => bench(()=>selvr_dot(Array.from(jsA), Array.from(jsB), N_DOT), 10_000),
+    js:    () => bench(()=>js_dot(jsA, jsB, N_DOT), 10_000),
+    wasm:  () => wasm_dot ? bench(wasm_dot, 10_000) : null,
+  },
+  sieve: {
+    selvr: () => bench(()=>selvr_sieve(100_000), 100),
+    js:    () => bench(()=>js_sieve(100_000),    100),
+    wasm:  () => wasm_sieve ? bench(()=>wasm_sieve(100_000), 100) : null,
+  },
+};
+
+function fmt(ms) { return ms < 1 ? `${(ms*1000).toFixed(0)} µs` : `${ms.toFixed(1)} ms`; }
+function setBar(id, ms, max) {
+  const el = document.getElementById('bar-'+id);
+  if (!el) return;
+  el.style.width = Math.max((ms/max)*100, 2)+'%';
+  el.textContent = fmt(ms);
+}
+
+window.runBench = async function(id) {
+  const def = BENCHMARKS[id];
+  const btn = document.querySelector(`#bench-${id} .run-btn`);
+  btn.disabled=true; btn.textContent='⏳…';
+  await new Promise(r=>setTimeout(r,16));  // yield to repaint
+
+  const s=def.selvr(), j=def.js(), w=def.wasm();
+  const max = Math.max(s, j, w??0, 0.001);
+  setBar(`${id}-selvr`, s, max);
+  setBar(`${id}-js`,    j, max);
+  if (w !== null) {
+    setBar(`${id}-wasm`, w, max);
+  } else {
+    const el=document.getElementById(`bar-${id}-wasm`);
+    if (el) { el.style.width='2%'; el.className='bar-fill err'; el.textContent='WASM unavailable'; }
+  }
+  btn.disabled=false; btn.textContent='▶ Re-run';
+};
+
+// Boot: load WASM, then run all benchmarks in sequence
+(async () => {
+  await loadAllWasm();
+  for (const [id, delay] of [['fib',100],['dot',800],['sieve',1500]])
+    setTimeout(()=>runBench(id), delay);
+})();
+</script>
+</body>
+</html>

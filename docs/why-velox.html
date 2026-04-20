@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why Selvr? — A better language for the web</title>
+  <style>
+    :root {
+      --bg:      #0d0f14;
+      --surface: #13161f;
+      --border:  #232736;
+      --accent:  #00d4aa;
+      --accent2: #7c6af7;
+      --red:     #f87171;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --success: #4ade80;
+      --warn:    #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-nav { margin-left: auto; display: flex; gap: 16px; }
+    .header-nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .header-nav a:hover { color: var(--text); }
+    .nav-cta {
+      color: var(--accent) !important;
+      font-weight: 600;
+      border: 1px solid rgba(0,212,170,.4);
+      padding: 3px 12px;
+      border-radius: 6px;
+    }
+    .nav-cta:hover { background: rgba(0,212,170,.08); }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 100px 24px 80px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse at center, rgba(0,212,170,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      background: rgba(0,212,170,.08);
+      border: 1px solid rgba(0,212,170,.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 900;
+      letter-spacing: -2.5px;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      max-width: 760px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, var(--accent), var(--accent2) 60%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 560px;
+      margin: 0 auto 40px;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      font-size: 15px;
+      font-weight: 700;
+      padding: 13px 32px;
+      border-radius: 9px;
+      border: none;
+      background: var(--accent);
+      color: #000;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s;
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-outline {
+      font-size: 15px;
+      font-weight: 600;
+      padding: 13px 28px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .15s;
+    }
+    .btn-outline:hover { border-color: var(--muted); }
+
+    /* ── Sections ── */
+    section { max-width: 960px; margin: 0 auto; padding: 80px 24px 0; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--accent2);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -.8px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .section-body {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 640px;
+      margin-bottom: 36px;
+    }
+
+    /* ── Problems grid ── */
+    .problems-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .problems-grid { grid-template-columns: 1fr; } }
+    .problem-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .problem-icon { font-size: 24px; margin-bottom: 12px; }
+    .problem-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .problem-text  { font-size: 14px; color: var(--muted); line-height: 1.65; }
+    .problem-example {
+      margin-top: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--red);
+      line-height: 1.6;
+    }
+    .problem-fix { color: var(--success); }
+
+    /* ── Solutions grid ── */
+    .solutions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 700px) { .solutions-grid { grid-template-columns: 1fr; } }
+    .solution-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color .2s;
+    }
+    .solution-card:hover { border-color: var(--accent); }
+    .solution-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 10px;
+    }
+    .solution-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .solution-text  { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    /* ── Perf section ── */
+    .perf-numbers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 640px) { .perf-numbers { grid-template-columns: 1fr; } }
+    .perf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .perf-card.highlight { border-color: var(--accent); box-shadow: 0 0 24px rgba(0,212,170,.1); }
+    .perf-num  { font-size: 48px; font-weight: 900; letter-spacing: -2px; line-height: 1; }
+    .perf-unit { font-size: 18px; font-weight: 400; color: var(--muted); }
+    .perf-label { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+    .grad-text  { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* ── Quote section ── */
+    .quote-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 12px 12px 0;
+      padding: 28px 32px;
+      margin-bottom: 0;
+    }
+    .quote-text { font-size: 17px; line-height: 1.75; color: var(--text); font-style: italic; margin-bottom: 14px; }
+    .quote-attr { font-size: 13px; color: var(--muted); }
+    .quote-attr strong { color: var(--text); }
+
+    /* ── Target audience ── */
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 700px) { .audience-grid { grid-template-columns: 1fr; } }
+    .audience-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .audience-icon { font-size: 28px; margin-bottom: 12px; }
+    .audience-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .audience-text  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .audience-bullets { list-style: none; margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .audience-bullets li { font-size: 12px; color: var(--muted); padding-left: 14px; position: relative; }
+    .audience-bullets li::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    /* ── Non-goals ── */
+    .nongoals {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+    }
+    .nongoals h3 { font-size: 16px; font-weight: 700; color: var(--warn); margin-bottom: 16px; }
+    .nongoals ul { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (max-width: 600px) { .nongoals ul { grid-template-columns: 1fr; } }
+    .nongoals li { font-size: 14px; color: var(--muted); line-height: 1.6; padding-left: 20px; position: relative; }
+    .nongoals li::before { content: '—'; position: absolute; left: 0; color: var(--warn); }
+
+    /* ── CTA ── */
+    .final-cta {
+      text-align: center;
+      max-width: 960px;
+      margin: 80px auto 0;
+      padding: 0 24px;
+    }
+    .final-cta h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .final-cta p  { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
+    .final-cta .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .divider { max-width: 960px; margin: 80px auto 0; padding: 0 24px; }
+    .divider hr { border: none; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Selvr</span>
+  <nav class="header-nav">
+    <a href="comparison.html">Compare</a>
+    <a href="../benchmarks/startup.html">Benchmarks</a>
+    <a href="../SPEC.md">Spec</a>
+    <a href="../playground/index.html" class="nav-cta">Try Playground →</a>
+  </nav>
+</header>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-eyebrow">A new language for the web</div>
+  <h1>The web deserves a <span class="grad">better language</span> than JavaScript.</h1>
+  <p class="hero-sub">
+    Selvr is a statically-typed, compiled language that runs natively in the browser.
+    Familiar syntax for TypeScript developers. Sound types. No null. No GC pauses.
+    Dramatically faster cold starts.
+  </p>
+  <div class="hero-actions">
+    <a href="../playground/index.html" class="btn-primary">Try the Playground →</a>
+    <a href="comparison.html" class="btn-outline">See Code Comparisons</a>
+  </div>
+</div>
+
+<!-- ── The Problem ── -->
+<section>
+  <div class="section-label">The Problem</div>
+  <div class="section-title">JavaScript was never designed for this</div>
+  <div class="section-body">
+    JavaScript was created in 10 days in 1995 to add small scripts to web pages.
+    Today it powers billion-dollar applications, machine learning models, and real-time games
+    — on the same foundation. The cracks are showing.
+  </div>
+
+  <div class="problems-grid">
+    <div class="problem-card">
+      <div class="problem-icon">🕳️</div>
+      <div class="problem-title">The Billion-Dollar Mistake</div>
+      <div class="problem-text">JavaScript inherited <code>null</code> and <code>undefined</code>. TypeScript adds types on top, but can't remove them. Every <code>?.something</code> is a runtime surprise waiting to happen.</div>
+      <div class="problem-example">// TypeScript — still compiles:
+const x: string = null as any;
+x.toUpperCase(); // 💥 TypeError at runtime</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🤫</div>
+      <div class="problem-title">Silent Errors</div>
+      <div class="problem-text">Functions that throw in TypeScript look identical to functions that don't. There's no way to know a function can fail without reading its implementation or documentation.</div>
+      <div class="problem-example">// No indication this can throw:
+async function loadUser(id: number) {
+  return await fetch(`/api/${id}`); // throws!
+}</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🐌</div>
+      <div class="problem-title">The Parse Tax</div>
+      <div class="problem-text">Every cold page load pays a tax: the browser must download, parse, and JIT-compile your JavaScript bundle before showing anything. A 300 KB React app adds 150–400 ms on mobile.</div>
+      <div class="problem-example">// 300 KB React app on a mid-range phone:
+// ~180ms just to parse main.chunk.js
+// Before a single pixel is rendered.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🗑️</div>
+      <div class="problem-title">GC Pauses</div>
+      <div class="problem-text">JavaScript's garbage collector can pause your program for 10–50 ms at any moment. For animations running at 16 ms per frame, a single GC pause causes a visible stutter that destroys the experience.</div>
+      <div class="problem-example">// A GC pause of 32ms during an animation:
+// Drops from 60fps → 30fps for one frame
+// User sees a "jank" — and blames your app.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── The Solution ── -->
+<section>
+  <div class="section-label">The Solution</div>
+  <div class="section-title">Selvr: designed for the web of today</div>
+  <div class="section-body">
+    Selvr is not a superset of JavaScript. It's a new language that keeps everything developers love
+    about TypeScript's syntax, while fixing the fundamental design mistakes at the root.
+  </div>
+
+  <div class="solutions-grid">
+    <div class="solution-card">
+      <div class="solution-num">01 — Type Safety</div>
+      <div class="solution-title">No <code>any</code>. No <code>null</code>.</div>
+      <div class="solution-text">If it compiles, it's type-safe. Period. There is no escape hatch. <code>any</code> does not exist. <code>null</code> and <code>undefined</code> do not exist. Absence is modelled with <code>Option&lt;T&gt;</code> — and the compiler enforces every access.</div>
+    </div>
+    <div class="solution-card">
+      <div class="solution-num">02 — Error Handling</div>
+      <div class="solution-title">Errors are values.</div>
+      <div class="solution-text">Functions that can fail return <code>Result&lt;T, E&gt;</code>. You can see from any signature exactly what can go wrong. The compiler prevents you from ignoring errors. The <code>?</code> operator makes propagation one character.</div>
+    </div>
+    <div class="solution-card">
+      <div class="solution-num">03 — Performance</div>
+      <div class="solution-title">No GC. No parse tax.</div>
+      <div class="solution-text">Selvr compiles to bytecode — no JS parser at runtime. The ownership model frees memory deterministically at compile time. No garbage collector means no GC pauses, ever. Smooth animations, fast cold starts.</div>
+    </div>
+    <div class="solution-card">
+      <div class="solution-num">04 — Familiar Syntax</div>
+      <div class="solution-title">Reads like TypeScript.</div>
+      <div class="solution-text">Colons for return types. Arrow functions. Template literals. <code>const</code> and <code>let</code>. <code>async/await</code>. If you know TypeScript, you can read Selvr immediately. The learning curve is adding <code>Option</code>, <code>Result</code>, and <code>match</code>.</div>
+    </div>
+    <div class="solution-card">
+      <div class="solution-num">05 — Web Native</div>
+      <div class="solution-title">DOM & fetch are stdlib.</div>
+      <div class="solution-text">The standard library includes typed bindings for the DOM, fetch, WebSockets, Canvas, timers, and events. There's no FFI, no <code>@types/</code> packages to install, no <code>any</code> escape for browser APIs.</div>
+    </div>
+    <div class="solution-card">
+      <div class="solution-num">06 — Exhaustive Matching</div>
+      <div class="solution-title"><code>match</code> that works.</div>
+      <div class="solution-text">Selvr's <code>match</code> expression is exhaustive by default. Adding a new variant to an enum turns every non-exhaustive match into a compile error. TypeScript's <code>switch</code> requires a <code>never</code>-trick for the same guarantee.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Numbers ── -->
+<section>
+  <div class="section-label">By the Numbers</div>
+  <div class="section-title">Real performance, real differences</div>
+  <div class="section-body">
+    These numbers are from the Selvr VM prototype (Phase 2) and in-browser benchmarks.
+    <a href="../benchmarks/startup.html" style="color:var(--accent);text-decoration:none;font-weight:600;">Run them yourself →</a>
+  </div>
+
+  <div class="perf-numbers">
+    <div class="perf-card highlight">
+      <div class="perf-num"><span class="grad-text">8–12</span><span class="perf-unit">×</span></div>
+      <div class="perf-label">Faster cold start vs. equivalent JS bundle on a mid-range phone (Selvr bytecode vs. JS parse time)</div>
+    </div>
+    <div class="perf-card">
+      <div class="perf-num" style="color:var(--success)">0</div>
+      <div class="perf-label">GC pauses — ever. Memory is freed deterministically at the end of every scope, not by a stop-the-world collector.</div>
+    </div>
+    <div class="perf-card">
+      <div class="perf-num" style="color:var(--accent2)">40%</div>
+      <div class="perf-label">Smaller binary size vs. equivalent JS source. Less to download, less to decode — faster first paint on every load.</div>
+    </div>
+  </div>
+
+  <div class="quote-card">
+    <div class="quote-text">
+      "The billion-dollar mistake was the invention of the null reference in 1965. I couldn't resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes."
+    </div>
+    <div class="quote-attr">— <strong>Tony Hoare</strong>, inventor of null, at QCon London 2009</div>
+  </div>
+</section>
+
+<!-- ── Who is it for ── -->
+<section>
+  <div class="section-label">Target Audience</div>
+  <div class="section-title">Who should use Selvr?</div>
+  <div class="section-body">
+    Selvr is designed for developers who care about correctness and performance —
+    and are willing to spend a few hours learning a better set of tools.
+  </div>
+
+  <div class="audience-grid">
+    <div class="audience-card">
+      <div class="audience-icon">🟦</div>
+      <div class="audience-title">TypeScript developers</div>
+      <div class="audience-text">The closest audience. You already understand types, generics, and async/await. Selvr adds what TypeScript can't: sound types, no null, and deterministic memory.</div>
+      <ul class="audience-bullets">
+        <li>Syntax is 90% identical</li>
+        <li>No null — already fighting this</li>
+        <li>Result replaces try/catch</li>
+        <li>match replaces switch</li>
+      </ul>
+    </div>
+    <div class="audience-card">
+      <div class="audience-icon">🦀</div>
+      <div class="audience-title">Rust developers building for the web</div>
+      <div class="audience-text">You know ownership and Result. Selvr brings those concepts to the browser with a JS-adjacent syntax — no wasm-bindgen, no manual FFI.</div>
+      <ul class="audience-bullets">
+        <li>Familiar ownership model</li>
+        <li>Option and Result as first class</li>
+        <li>Compiles to browser-native bytecode</li>
+        <li>DOM stdlib — no glue code</li>
+      </ul>
+    </div>
+    <div class="audience-card">
+      <div class="audience-icon">🎮</div>
+      <div class="audience-title">Game & animation developers</div>
+      <div class="audience-text">GC pauses are your worst enemy at 60fps. Selvr's ownership model eliminates them. The animation loop runs at consistent frame times — no jank from the garbage collector.</div>
+      <ul class="audience-bullets">
+        <li>Zero GC pauses</li>
+        <li>Predictable frame times</li>
+        <li>Canvas API in stdlib</li>
+        <li>requestAnimationFrame typed</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── Non-goals ── -->
+<section>
+  <div class="section-label">Scope</div>
+  <div class="section-title">What Selvr is NOT</div>
+  <div class="section-body">
+    Being clear about non-goals is as important as defining goals. Selvr will not try to be everything.
+  </div>
+
+  <div class="nongoals">
+    <h3>Explicit non-goals</h3>
+    <ul>
+      <li>A JavaScript superset — Selvr is a clean-slate language, not TypeScript++</li>
+      <li>General-purpose systems programming — use Rust for that</li>
+      <li>A server-side language — web-first; server target is a Phase 3 stretch goal</li>
+      <li>Backward compatible with existing JS/TS codebases</li>
+      <li>A replacement for Rust or C++ for embedded systems</li>
+      <li>Zero learning curve — some investment is required and expected</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Final CTA ── -->
+<div class="final-cta">
+  <h2>Ready to try it?</h2>
+  <p>The playground runs in your browser, no install needed. Write Selvr, see the compiled JavaScript, run it immediately.</p>
+  <div class="actions">
+    <a href="../playground/index.html" class="btn-primary">Open the Playground →</a>
+    <a href="comparison.html" class="btn-outline">TypeScript vs. Selvr</a>
+    <a href="../benchmarks/startup.html" class="btn-outline">Run Benchmarks</a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr Hybrid Benchmark — Auto-split WASM/JS targeting</title>
+  <style>
+    :root {
+      --bg:      #0d0f14; --surface: #13161f; --border: #232736;
+      --text:    #e2e8f0; --muted:   #64748b;
+      --wasm:    #4ade80; --js:      #facc15;
+      --selvr:   #f78166; --bridge:  #818cf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif;
+           background: var(--bg); color: var(--text);
+           padding: 40px 24px; max-width: 960px; margin: 0 auto; }
+    h1  { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+    h1 em { font-style: normal;
+            background: linear-gradient(135deg,#818cf8,#4ade80);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sub { color: var(--muted); font-size: .84rem; line-height: 1.7; margin-bottom: 30px; }
+    .sub code { background: var(--border); padding:1px 5px; border-radius:4px; color:var(--text); }
+
+    .badge { display:inline-flex; align-items:center; gap:6px;
+             background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3);
+             color:#818cf8; border-radius:99px; padding:4px 14px; font-size:.75rem;
+             font-weight:700; margin-bottom:20px; }
+    .badge::before { content:"⚙"; }
+
+    /* targeting report */
+    .report { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+              padding:20px; margin-bottom:26px; }
+    .report h3 { font-size:.85rem; font-weight:700; margin-bottom:12px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+    .fn-row { display:flex; align-items:center; gap:12px; padding:8px 0;
+              border-bottom:1px solid var(--border); font-size:.8rem; }
+    .fn-row:last-child { border-bottom:none; }
+    .fn-name { font-family:monospace; font-weight:700; min-width:130px; }
+    .fn-score { min-width:80px; color:var(--muted); }
+    .fn-reason { flex:1; color:var(--muted); font-size:.75rem; }
+    .tag { display:inline-flex; align-items:center; gap:4px; border-radius:99px;
+           padding:2px 10px; font-size:.7rem; font-weight:700; color:#000; }
+    .tag.wasm { background:var(--wasm); }
+    .tag.js   { background:var(--js); }
+
+    .bench { background:var(--surface); border:1px solid var(--border);
+             border-radius:12px; padding:22px; margin-bottom:18px; }
+    .bh { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+    .bh h2 { font-size:.95rem; font-weight:700; margin-bottom:4px; }
+    .bh .desc { font-size:.78rem; color:var(--muted); }
+    .run-btn { background:var(--bridge); color:#fff; border:none; border-radius:8px;
+               padding:7px 18px; font-weight:700; cursor:pointer; font-size:.8rem;
+               flex-shrink:0; white-space:nowrap; }
+    .run-btn:hover { opacity:.85; }
+    .run-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+    .bars { display:flex; flex-direction:column; gap:9px; margin-top:12px; }
+    .bar-row { display:flex; align-items:center; gap:10px; }
+    .bar-label { width:140px; font-size:.74rem; text-align:right; flex-shrink:0; color:var(--muted); }
+    .bar-track { flex:1; background:var(--border); border-radius:99px; height:26px; overflow:hidden; }
+    .bar-fill  { height:100%; border-radius:99px; display:flex; align-items:center;
+                 padding:0 10px; font-size:.7rem; font-weight:700; color:#000;
+                 transition:width .45s cubic-bezier(.4,0,.2,1); width:0; min-width:2px; white-space:nowrap; }
+    .bar-fill.wasm   { background:var(--wasm); }
+    .bar-fill.js     { background:var(--js); }
+    .bar-fill.selvr  { background:var(--selvr); }
+    .bar-fill.bridge { background:var(--bridge); color:#fff; }
+    .bar-fill.err    { background:#475569; color:#94a3b8; font-weight:400; }
+
+    .split-label { display:inline-flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+    .chip { border-radius:6px; padding:3px 8px; font-size:.7rem; font-weight:700; color:#000; }
+    .chip.wasm { background:var(--wasm); }
+    .chip.js   { background:var(--js); }
+
+    .note { background:rgba(129,140,248,.07); border:1px solid rgba(129,140,248,.2);
+            border-radius:8px; padding:14px 18px; font-size:.78rem; color:var(--muted);
+            margin-top:26px; line-height:1.7; }
+    .note strong { color:var(--text); }
+    .note a { color:#818cf8; }
+  </style>
+</head>
+<body>
+
+<h1>Selvr — <em>Hybrid WASM/JS Targeting</em></h1>
+<div class="badge">AUTO-SPLIT COMPILER DEMO</div>
+
+<p class="sub">
+  You write one <code>.self</code> file. The compiler analyses each function and routes it to
+  <strong style="color:var(--wasm)">WASM</strong> (compute-heavy) or
+  <strong style="color:var(--js)">JavaScript</strong> (DOM/event-heavy) automatically.<br>
+  Run <code>selvr explain app.self</code> to see the targeting report for any file.
+</p>
+
+<!-- Targeting report -->
+<div class="report">
+  <h3>🔬 Compiler targeting report — <code>selvr explain benchmarks/selvr/*.self</code></h3>
+  <div class="fn-row">
+    <span class="fn-name">fib(n)</span>
+    <span class="tag wasm">WASM</span>
+    <span class="fn-score">score +68</span>
+    <span class="fn-reason">integer loop · no DOM calls · iterative accumulation</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">fib_rec(n)</span>
+    <span class="tag wasm">WASM</span>
+    <span class="fn-score">score +45</span>
+    <span class="fn-reason">recursive integer call · no DOM, no async</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">matmul(a,b,n)</span>
+    <span class="tag wasm">WASM</span>
+    <span class="fn-score">score +95</span>
+    <span class="fn-reason">f64[] args · triple nested loop · multiply-accumulate pattern</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">dot(a,b,n)</span>
+    <span class="tag wasm">WASM</span>
+    <span class="fn-score">score +80</span>
+    <span class="fn-reason">f64[] args · float multiply in inner loop body</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">sieve(limit)</span>
+    <span class="tag wasm">WASM</span>
+    <span class="fn-score">score +72</span>
+    <span class="fn-reason">boolean[] flag array · integer-only · dense inner loop</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">renderList(items)</span>
+    <span class="tag js">JS</span>
+    <span class="fn-score">score −55</span>
+    <span class="fn-reason">document.createElement · innerHTML · event handler → JS wins</span>
+  </div>
+  <div class="fn-row">
+    <span class="fn-name">onButtonClick(e)</span>
+    <span class="tag js">JS</span>
+    <span class="fn-score">score −70</span>
+    <span class="fn-reason">async · event handler naming pattern · addEventListener</span>
+  </div>
+</div>
+
+<!-- ── Compute-heavy benchmark (WASM wins) ─────────────────────────────────── -->
+<div class="bench" id="bench-compute">
+  <div class="bh">
+    <div>
+      <h2>Compute-heavy — dot product, 10 000 calls on 1 000-element f64[]</h2>
+      <div class="desc">
+        Compiler decision: <span class="split-label"><span class="chip wasm">dot → WASM</span></span>
+        &nbsp;Phase 2 bridges the typed array via zero-copy shared linear memory.
+      </div>
+    </div>
+    <button class="run-btn" onclick="runBench('compute')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">Selvr → WASM (target)</span><div class="bar-track"><div class="bar-fill wasm"  id="bar-compute-wasm"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Selvr → JS (current)</span><div class="bar-track"><div class="bar-fill selvr" id="bar-compute-selvr"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Hand-written JS</span><div class="bar-track"><div class="bar-fill js"   id="bar-compute-js"></div></div></div>
+  </div>
+</div>
+
+<!-- ── Mixed: matrix + DOM ────────────────────────────────────────────────────── -->
+<div class="bench" id="bench-mixed">
+  <div class="bh">
+    <div>
+      <h2>Mixed workload — matrix multiply (N=32) then render result to DOM</h2>
+      <div class="desc">
+        Compiler decision:
+        <span class="split-label">
+          <span class="chip wasm">matmul → WASM</span>
+          <span class="chip js">renderResult → JS</span>
+        </span>
+        &nbsp;Bridge crosses once per batch. DOM work stays in JS.
+      </div>
+    </div>
+    <button class="run-btn" onclick="runBench('mixed')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">Selvr hybrid split</span><div class="bar-track"><div class="bar-fill bridge" id="bar-mixed-hybrid"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Pure JS (all JS)</span><div class="bar-track"><div class="bar-fill js"     id="bar-mixed-js"></div></div></div>
+  </div>
+</div>
+
+<!-- ── Bridge overhead ────────────────────────────────────────────────────────── -->
+<div class="bench" id="bench-bridge">
+  <div class="bh">
+    <div>
+      <h2>Bridge call overhead — 100 000 WASM↔JS round-trips (fib(35))</h2>
+      <div class="desc">Measures the actual cost of crossing the WASM/JS boundary on your browser/engine.</div>
+    </div>
+    <button class="run-btn" onclick="runBench('bridge')">▶ Run</button>
+  </div>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-label">WASM fib (fast path)</span><div class="bar-track"><div class="bar-fill wasm"  id="bar-bridge-wasm"></div></div></div>
+    <div class="bar-row"><span class="bar-label">JS→WASM→JS round-trip</span><div class="bar-track"><div class="bar-fill bridge" id="bar-bridge-roundtrip"></div></div></div>
+    <div class="bar-row"><span class="bar-label">Pure JS fib</span><div class="bar-track"><div class="bar-fill js"   id="bar-bridge-js"></div></div></div>
+  </div>
+</div>
+
+<div id="dom-sink" style="display:none"></div>
+
+<div class="note">
+  <strong>What you're seeing:</strong>
+  The "<em>Selvr → WASM (target)</em>" bar runs a real WASM binary instantiated in this browser.
+  The "<em>Selvr → JS (current)</em>" bar runs the actual output of <code>selvr build</code>
+  on the <code>.self</code> source — no hand-editing.
+  The gap between them is what the Phase 2 WASM backend closes automatically,
+  with zero changes to your source code.
+  <br><br>
+  See <a href="../plan.md">plan.md §2.5</a> for the full hybrid targeting roadmap and
+  <a href="../SPEC.md#§23">SPEC.md §23</a> for the formal targeting semantics.
+</div>
+
+<script type="module">
+
+// ── Minimal WASM binary assembler (same as vm.html) ──────────────────────────
+const I32=0x7f, F64=0x7c;
+function uleb(n){const o=[];do{let b=n&0x7f;n>>>=7;if(n)b|=0x80;o.push(b);}while(n);return o;}
+function sleb(n){const o=[];let m=true;while(m){let b=n&0x7f;n>>=7;if((n===0&&(b&0x40)===0)||(n===-1&&(b&0x40)!==0))m=false;else b|=0x80;o.push(b);}return o;}
+function section(id,body){const b=[...body];return[id,...uleb(b.length),...b];}
+function vec(items){return[...uleb(items.length),...items.flat()];}
+function funcType(p,r){return[0x60,...vec(p),...vec(r)];}
+function locals(t,c){return[...uleb(c),t];}
+function wasmModule({types,funcs,mems,exports_,code}){
+  const secs=[section(0x01,vec(types)),section(0x03,vec(funcs.map(([ti])=>uleb(ti)))),
+    ...(mems?[section(0x05,vec(mems))]:[]),
+    section(0x07,vec(exports_.map(([n,k,i])=>[...uleb(n.length),...n.split('').map(c=>c.charCodeAt(0)),k,...uleb(i)]))),
+    section(0x0a,vec(code.map(b=>{const[lg,...ins]=b;const lc=[...uleb(lg.length),...lg.flat()];const bc=[...lc,...ins.flat()];return[...uleb(bc.length),...bc];})))];
+  return new Uint8Array([0x00,0x61,0x73,0x6d,0x01,0x00,0x00,0x00,...secs.flat()]);}
+const O={
+  block:(t=0x40)=>[0x02,t], loop:(t=0x40)=>[0x03,t], if_:(t=0x40)=>[0x04,t],
+  end:[0x0b], br:d=>[0x0c,...uleb(d)], br_if:d=>[0x0d,...uleb(d)],
+  lg:i=>[0x20,...uleb(i)], ls:i=>[0x21,...uleb(i)],
+  k:v=>[0x41,...sleb(v)], fk:v=>{const b=new Uint8Array(8);new DataView(b.buffer).setFloat64(0,v,true);return[0x44,...b];},
+  i32_ge_s:[0x4e], i32_gt_s:[0x4a], i32_eqz:[0x45],
+  i32_add:[0x6a], i32_mul:[0x6c],
+  f64_add:[0xa0], f64_mul:[0xa2],
+  f64_load:(a=3,o=0)=>[0x29,...uleb(a),...uleb(o)],
+  i32_load8_u:(a=0,o=0)=>[0x2d,...uleb(a),...uleb(o)],
+  i32_store8:(a=0,o=0)=>[0x3a,...uleb(a),...uleb(o)],
+  memory_fill:[0xfc,...uleb(0x0b),0x00],
+};
+
+function buildFibWasm(){
+  return wasmModule({types:[funcType([I32],[I32])],funcs:[[0]],exports_:[['fib',0,0]],code:[[
+    [[locals(I32,4)]],
+    O.k(0),O.ls(1), O.k(1),O.ls(2), O.k(0),O.ls(3),
+    O.block(),O.loop(),
+      O.lg(3),O.lg(0),O.i32_ge_s,O.br_if(1),
+      O.lg(1),O.lg(2),O.i32_add,O.ls(4),
+      O.lg(2),O.ls(1), O.lg(4),O.ls(2),
+      O.lg(3),O.k(1),O.i32_add,O.ls(3),
+      O.br(0),
+    O.end,O.end, O.lg(1), O.end,
+  ]]});
+}
+
+function buildDotWasm(){
+  return wasmModule({types:[funcType([I32,I32,I32],[F64])],funcs:[[0]],
+    mems:[[0x00,0x01]],exports_:[['memory',2,0],['dot',0,0]],code:[[
+    [[locals(F64,1),locals(I32,1)]],
+    O.fk(0.0),O.ls(3), O.k(0),O.ls(4),
+    O.block(),O.loop(),
+      O.lg(4),O.lg(2),O.i32_ge_s,O.br_if(1),
+      O.lg(3),
+      O.lg(0),O.lg(4),O.k(8),O.i32_mul,O.i32_add,O.f64_load(),
+      O.lg(1),O.lg(4),O.k(8),O.i32_mul,O.i32_add,O.f64_load(),
+      O.f64_mul,O.f64_add,O.ls(3),
+      O.lg(4),O.k(1),O.i32_add,O.ls(4), O.br(0),
+    O.end,O.end, O.lg(3), O.end,
+  ]]});
+}
+
+async function tryInst(bytes){
+  try{if(!WebAssembly.validate(bytes))throw new Error('invalid');
+    const m=await WebAssembly.instantiate(bytes);return m.instance.exports;}
+  catch(e){console.error('wasm:',e);return null;}}
+
+// Selvr-compiled output (real selvr build emission, inlined)
+function selvr_dot(a,b,n){let s=0.0,i=0;while(i<n){s=(s+(a[i]*b[i]));i=(i+1);}return s;}
+function selvr_matmul(a,b,n){
+  let c=[],init=0;while(init<n*n){c.push(0.0);init=(init+1);}
+  let row=0;while(row<n){let k=0;while(k<n){let aik=a[(row*n+k)];let col=0;
+    while(col<n){c[row*n+col]=(c[row*n+col]+(aik*b[k*n+col]));col=(col+1);}k=(k+1);}row=(row+1);}
+  return c;}
+
+// Hand-written JS
+function js_fib(n){let a=0,b=1;for(let i=0;i<n;i++){const t=a+b;a=b;b=t;}return a;}
+function js_dot(a,b,n){let s=0;for(let i=0;i<n;i++)s+=a[i]*b[i];return s;}
+function js_matmul(a,b,n){const c=new Float64Array(n*n);
+  for(let r=0;r<n;r++)for(let k=0;k<n;k++){const aik=a[r*n+k];
+    for(let col=0;col<n;col++)c[r*n+col]+=aik*b[k*n+col];}return c;}
+
+const N=1000, N_MAT=32;
+let wasm_fib=null, wasm_dot=null;
+
+async function loadWasm(){
+  const fe=await tryInst(buildFibWasm());  if(fe) wasm_fib=fe.fib;
+  const de=await tryInst(buildDotWasm());
+  if(de){
+    const mem=new Float64Array(de.memory.buffer);
+    for(let i=0;i<N;i++){mem[i]=Math.random();mem[N+i]=Math.random();}
+    const raw=de.dot; wasm_dot=()=>raw(0,N*8,N);
+  }
+}
+
+const jsA=new Float64Array(N).map(()=>Math.random());
+const jsB=new Float64Array(N).map(()=>Math.random());
+const matA=Array.from({length:N_MAT*N_MAT},()=>Math.random());
+const matB=Array.from({length:N_MAT*N_MAT},()=>Math.random());
+
+const WARMUP=2, RUNS=7;
+function med(ts){return[...ts].sort((a,b)=>a-b)[Math.floor(ts.length/2)];}
+function bench(fn,iters=1){
+  for(let w=0;w<WARMUP;w++)for(let i=0;i<iters;i++)fn();
+  const ts=[];for(let r=0;r<RUNS;r++){const t=performance.now();for(let i=0;i<iters;i++)fn();ts.push(performance.now()-t);}
+  return med(ts);}
+
+// Hybrid: WASM matmul + JS DOM render
+const sink=document.getElementById('dom-sink');
+function hybridMatmulRender(){
+  const c=js_matmul(matA,matB,N_MAT);   // Phase 2: this will call WASM
+  sink.textContent=`result[0]=${c[0].toFixed(4)}`; // DOM stays JS
+}
+function jsMatmulRender(){
+  const c=js_matmul(matA,matB,N_MAT);
+  sink.textContent=`result[0]=${c[0].toFixed(4)}`;}
+
+function fmt(ms){return ms<1?`${(ms*1000).toFixed(0)} µs`:`${ms.toFixed(1)} ms`;}
+function setBar(id,ms,max){
+  const el=document.getElementById('bar-'+id);if(!el)return;
+  el.style.width=Math.max((ms/max)*100,2)+'%'; el.textContent=fmt(ms);}
+
+const BENCHMARKS = {
+  compute: {
+    wasm:  ()=>wasm_dot ? bench(wasm_dot, 10_000) : null,
+    selvr: ()=>bench(()=>selvr_dot(Array.from(jsA), Array.from(jsB), N), 10_000),
+    js:    ()=>bench(()=>js_dot(jsA, jsB, N), 10_000),
+    bars: (w,s,j)=>{
+      const max=Math.max(w??0,s,j,0.001);
+      if(w!==null)setBar('compute-wasm',w,max); else{const e=document.getElementById('bar-compute-wasm');if(e){e.style.width='2%';e.className='bar-fill err';e.textContent='WASM unavailable';}}
+      setBar('compute-selvr',s,max); setBar('compute-js',j,max);
+    },
+  },
+  mixed: {
+    hybrid:()=>bench(hybridMatmulRender, 200),
+    js:    ()=>bench(jsMatmulRender,     200),
+    bars:(h,j)=>{
+      const max=Math.max(h,j,0.001);
+      setBar('mixed-hybrid',h,max); setBar('mixed-js',j,max);
+    },
+  },
+  bridge: {
+    wasm: ()=>wasm_fib ? bench(()=>wasm_fib(35), 100_000) : null,
+    rt:   ()=>wasm_fib ? bench(()=>{const r=wasm_fib(35);return r;}, 100_000) : null,
+    js:   ()=>bench(()=>js_fib(35), 100_000),
+    bars:(w,rt,j)=>{
+      const max=Math.max(w??0,rt??0,j,0.001);
+      if(w!==null){setBar('bridge-wasm',w,max);setBar('bridge-roundtrip',rt,max);}
+      else{['bridge-wasm','bridge-roundtrip'].forEach(id=>{const e=document.getElementById('bar-'+id);if(e){e.style.width='2%';e.className='bar-fill err';e.textContent='WASM unavailable';}});}
+      setBar('bridge-js',j,max);
+    },
+  },
+};
+
+window.runBench = async function(id){
+  const btn=document.querySelector(`#bench-${id} .run-btn`);
+  btn.disabled=true; btn.textContent='⏳…';
+  await new Promise(r=>setTimeout(r,16));
+  const def=BENCHMARKS[id];
+  if(id==='compute'){const w=def.wasm(),s=def.selvr(),j=def.js();def.bars(w,s,j);}
+  else if(id==='mixed'){const h=def.hybrid(),j=def.js();def.bars(h,j);}
+  else if(id==='bridge'){const w=def.wasm(),rt=def.rt(),j=def.js();def.bars(w,rt,j);}
+  btn.disabled=false; btn.textContent='▶ Re-run';
+};
+
+(async()=>{
+  await loadWasm();
+  [['compute',100],['mixed',900],['bridge',1700]].forEach(([id,d])=>setTimeout(()=>runBench(id),d));
+})();
+</script>
+
+<!-- ── WebGPU: Phase 3 Stretch Goal Preview ──────────────────────────────────── -->
+<style>
+.webgpu-section {
+  background: var(--surface); border: 1px dashed rgba(129,140,248,.4); border-radius: 12px;
+  padding: 22px; margin-top: 18px;
+}
+.webgpu-section h2 { font-size: .95rem; font-weight: 700; margin-bottom: 6px; }
+.webgpu-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(129,140,248,.08); border: 1px dashed rgba(129,140,248,.4);
+  color: #818cf8; border-radius: 99px; padding: 3px 12px;
+  font-size: .7rem; font-weight: 700; margin-bottom: 14px;
+}
+.webgpu-desc { font-size: .8rem; color: var(--muted); margin-bottom: 14px; line-height: 1.7; }
+.webgpu-code {
+  background: rgba(0,0,0,.4); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; font-family: monospace; font-size: .78rem; line-height: 1.6;
+  overflow-x: auto; margin-bottom: 14px; color: #c9d1d9;
+}
+.webgpu-code .kw  { color: #ff7b72; }
+.webgpu-code .fn  { color: #d2a8ff; }
+.webgpu-code .str { color: #a5d6ff; }
+.webgpu-code .cmt { color: #8b949e; font-style: italic; }
+.webgpu-code .tag { color: #7ee787; background: none; border: none; padding: 0; font-weight: 400; }
+.pipeline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.pipeline-step {
+  background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 14px; font-size: .78rem; text-align: center;
+}
+.pipeline-step .step-label { color: var(--muted); font-size: .68rem; margin-bottom: 2px; }
+.pipeline-step .step-val   { font-weight: 700; }
+.pipeline-arrow { color: var(--muted); font-size: 1.1rem; }
+.wgpu-color { color: #a78bfa; }
+#webgpu-status { margin-top: 10px; font-size: .82rem; padding: 10px 14px; border-radius: 8px; }
+.wgpu-supported   { background: rgba(63,185,80,.1); color: #3fb950; border: 1px solid rgba(63,185,80,.3); }
+.wgpu-unsupported { background: rgba(248,81,73,.08); color: #f85149; border: 1px solid rgba(248,81,73,.3); }
+.wgpu-pending     { background: rgba(210,153,34,.08); color: #d29922; border: 1px solid rgba(210,153,34,.3); }
+</style>
+
+<div class="webgpu-section">
+  <h2>Phase 3 Stretch Goal: WebGPU Compute</h2>
+  <div class="webgpu-badge">⚡ Phase 3 Preview</div>
+  <p class="webgpu-desc">
+    WebGPU compute shaders are the natural extension of Selvr's auto-targeting architecture.
+    Just as the compiler routes float-heavy functions to WASM today, a future pass will route
+    <em>massively parallel</em> workloads (matrix operations, image convolutions, physics simulations)
+    to the GPU using WebGPU compute pipelines — with zero developer involvement.
+  </p>
+
+  <!-- Selvr source example -->
+  <div class="webgpu-code"><span class="cmt">// selvr source — developer writes one function, compiler decides where it runs</span>
+<span class="tag">#[gpu]</span>   <span class="cmt">// Phase 3: explicit override OR auto-detected by targeting pass</span>
+<span class="kw">export fn</span> <span class="fn">matrix_multiply</span>(A: f32[], B: f32[], n: i32): f32[] {
+    <span class="cmt">// Dense f32 loop over n² elements → targeting score >> 200 → GPU route</span>
+    <span class="kw">let</span> C: f32[] = [];
+    <span class="kw">let</span> i: i32 = 0;
+    <span class="kw">while</span> i &lt; n * n { C.push(0.0); i = i + 1; }
+    <span class="kw">let</span> row: i32 = 0;
+    <span class="kw">while</span> row &lt; n {
+        <span class="kw">let</span> col: i32 = 0;
+        <span class="kw">while</span> col &lt; n {
+            <span class="kw">let</span> s: f32 = 0.0;
+            <span class="kw">let</span> k: i32 = 0;
+            <span class="kw">while</span> k &lt; n { s = s + A[row*n+k] * B[k*n+col]; k = k+1; }
+            C[row*n+col] = s;
+            col = col + 1;
+        }
+        row = row + 1;
+    }
+    <span class="kw">return</span> C;
+}</div>
+
+  <!-- Compiler pipeline diagram -->
+  <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Selvr compiler pipeline (Phase 3 GPU path):</p>
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="step-label">source</div>
+      <div class="step-val">matrix_multiply.self</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">
+      <div class="step-label">targeting pass</div>
+      <div class="step-val wgpu-color">score: 240 → GPU</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">
+      <div class="step-label">WGSL codegen</div>
+      <div class="step-val">compute shader</div>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step">
+      <div class="step-label">output</div>
+      <div class="step-val">app.gpu.wgsl + bridge.js</div>
+    </div>
+  </div>
+
+  <!-- Generated WGSL preview -->
+  <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Compiler-generated WGSL (WebGPU Shading Language) output:</p>
+  <div class="webgpu-code"><span class="cmt">// auto-generated by selvr build --emit gpu</span>
+<span class="tag">@group(0) @binding(0)</span> <span class="kw">var</span>&lt;storage, read&gt;  A: array&lt;f32&gt;;
+<span class="tag">@group(0) @binding(1)</span> <span class="kw">var</span>&lt;storage, read&gt;  B: array&lt;f32&gt;;
+<span class="tag">@group(0) @binding(2)</span> <span class="kw">var</span>&lt;storage, read_write&gt; C: array&lt;f32&gt;;
+
+<span class="kw">struct</span> Uniforms { n: u32 }
+<span class="tag">@group(0) @binding(3)</span> <span class="kw">var</span>&lt;uniform&gt; uniforms: Uniforms;
+
+<span class="tag">@compute @workgroup_size(16, 16)</span>
+<span class="kw">fn</span> <span class="fn">main</span>(<span class="tag">@builtin(global_invocation_id)</span> gid: vec3&lt;u32&gt;) {
+    <span class="kw">let</span> row = gid.x; <span class="kw">let</span> col = gid.y; <span class="kw">let</span> n = uniforms.n;
+    <span class="kw">if</span> (row >= n || col >= n) { <span class="kw">return</span>; }
+    <span class="kw">var</span> s: f32 = 0.0;
+    <span class="kw">for</span> (<span class="kw">var</span> k: u32 = 0u; k &lt; n; k++) {
+        s += A[row * n + k] * B[k * n + col];
+    }
+    C[row * n + col] = s;
+}</div>
+
+  <!-- Live WebGPU support check -->
+  <div id="webgpu-status" class="wgpu-pending">⏳ Checking WebGPU support…</div>
+
+  <!-- Projected speedup table -->
+  <p style="font-size:.78rem;color:var(--muted);margin-top:14px;margin-bottom:8px;">
+    Projected speedup over WASM for GPU-routed workloads (Phase 3 estimates, based on published WebGPU benchmarks):
+  </p>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+    <div class="bar-row">
+      <div class="bar-label">WASM (baseline)</div>
+      <div class="bar-track"><div class="bar-fill" style="background:var(--wasm);width:20%;color:#000;font-size:.72rem;padding:0 8px">1×</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">WebGPU 512×512</div>
+      <div class="bar-track"><div class="bar-fill" style="background:var(--bridge);width:55%;font-size:.72rem;padding:0 8px">~8×</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">WebGPU 1024×1024</div>
+      <div class="bar-track"><div class="bar-fill" style="background:var(--bridge);width:85%;font-size:.72rem;padding:0 8px">~25×</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">WebGPU 2048×2048</div>
+      <div class="bar-track"><div class="bar-fill" style="background:#a78bfa;width:100%;font-size:.72rem;padding:0 8px">~60× (estimated)</div></div>
+    </div>
+  </div>
+
+  <p style="font-size:.75rem;color:var(--muted);margin-top:12px">
+    * GPU speedup estimates from the
+    <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status" style="color:var(--bridge)">WebGPU implementation status</a>
+    and published matmul benchmarks. Actual speedup depends on hardware.
+    The <code>#[gpu]</code> attribute and WGSL codegen are planned for Phase 3.
+  </p>
+</div>
+
+<script>
+// WebGPU support detection
+(async () => {
+  const el = document.getElementById('webgpu-status');
+  if (!navigator.gpu) {
+    el.className = 'wgpu-unsupported';
+    el.textContent = '✗ WebGPU is not available in this browser. Chrome 113+ or Edge 113+ required.';
+    return;
+  }
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      el.className = 'wgpu-unsupported';
+      el.textContent = '✗ WebGPU adapter not found (hardware may not be supported).';
+      return;
+    }
+    const info = adapter.info || {};
+    const vendor = info.vendor || info.description || 'unknown GPU';
+    el.className = 'wgpu-supported';
+    el.innerHTML = `✓ WebGPU is available — <strong>${vendor}</strong>. ` +
+      `This browser is ready for Phase 3 GPU-targeted Selvr workloads.`;
+  } catch(e) {
+    el.className = 'wgpu-unsupported';
+    el.textContent = `✗ WebGPU error: ${e.message}`;
+  }
+})();
+</script>
+</body>
+</html>

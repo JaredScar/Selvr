@@ -1,0 +1,758 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr vs. TypeScript — Side-by-Side Comparison</title>
+  <style>
+    :root {
+      --bg:      #0d0f14;
+      --surface: #13161f;
+      --border:  #232736;
+      --accent:  #00d4aa;
+      --accent2: #7c6af7;
+      --red:     #f87171;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --success: #4ade80;
+      --warn:    #fbbf24;
+      /* syntax */
+      --kw:   #7c6af7;
+      --str:  #4ade80;
+      --num:  #fb923c;
+      --type: #38bdf8;
+      --cmt:  #4b5563;
+      --fn:   #fcd34d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: 13px; color: var(--muted); }
+    .header-nav { margin-left: auto; display: flex; gap: 16px; }
+    .header-nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .header-nav a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 960px;
+      margin: 60px auto 0;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hero h1 .vs { color: var(--muted); font-weight: 400; font-size: 28px; margin: 0 8px; }
+    .ts-color  { color: #3b82f6; }
+    .self-color  { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p    { color: var(--muted); font-size: 16px; line-height: 1.7; max-width: 600px; margin: 0 auto; }
+
+    /* ── Task tabs ── */
+    .tasks-nav {
+      max-width: 960px;
+      margin: 48px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .task-tab {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .task-tab:hover { color: var(--text); border-color: var(--muted); }
+    .task-tab.active { color: var(--accent); background: rgba(0,212,170,.08); border-color: var(--accent); }
+
+    /* ── Comparison blocks ── */
+    .comparisons {
+      max-width: 960px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+    }
+
+    .comparison-block { display: none; }
+    .comparison-block.active { display: block; }
+
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .block-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(0,212,170,.12);
+      border: 1px solid rgba(0,212,170,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .block-title { font-size: 22px; font-weight: 700; }
+    .block-sub   { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
+    /* Code split */
+    .code-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 680px) { .code-split { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .code-panel.ts-panel { border-color: rgba(59,130,246,.3); }
+    .code-panel.self-panel { border-color: rgba(0,212,170,.3); }
+
+    .code-lang {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+    }
+    .ts-panel .code-lang { background: rgba(59,130,246,.12); color: #3b82f6; }
+    .self-panel .code-lang { background: rgba(0,212,170,.10); color: var(--accent); }
+    .lang-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .ts-dot  { background: #3b82f6; }
+    .self-dot  { background: var(--accent); }
+
+    pre {
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.65;
+      padding: 16px;
+      background: var(--surface);
+      overflow-x: auto;
+      tab-size: 4;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    /* Syntax highlight classes */
+    .kw   { color: var(--kw); }
+    .str  { color: var(--str); }
+    .num  { color: var(--num); }
+    .typ  { color: var(--type); }
+    .cmt  { color: var(--cmt); font-style: italic; }
+    .fn   { color: var(--fn); }
+    .op   { color: var(--muted); }
+
+    /* ── Callout boxes ── */
+    .callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid;
+      font-size: 14px;
+      line-height: 1.6;
+      align-items: flex-start;
+    }
+    .callout.good  { background: rgba(74,222,128,.05);  border-color: rgba(74,222,128,.2);  }
+    .callout.warn  { background: rgba(251,191,36,.05);  border-color: rgba(251,191,36,.2);  }
+    .callout.info  { background: rgba(56,189,248,.05);  border-color: rgba(56,189,248,.2);  }
+    .callout.bad   { background: rgba(248,113,113,.05); border-color: rgba(248,113,113,.2); }
+    .callout-icon  { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .callout.good  .callout-icon { color: var(--success); }
+    .callout.warn  .callout-icon { color: var(--warn); }
+    .callout.info  .callout-icon { color: var(--type); }
+    .callout.bad   .callout-icon { color: var(--red); }
+    .callout strong { display: block; font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+
+    /* ── Summary table ── */
+    .summary-section { max-width: 960px; margin: 60px auto 0; padding: 0 24px; }
+    .summary-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+    .summary-sub   { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .compare-table th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table .feature { font-weight: 600; }
+    .compare-table .check { color: var(--success); font-size: 15px; }
+    .compare-table .cross { color: var(--red);     font-size: 15px; }
+    .compare-table .meh   { color: var(--warn);    font-size: 15px; }
+
+    .cta-wrap {
+      max-width: 960px;
+      margin: 48px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .cta-btn {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 11px 28px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cta-primary { background: var(--accent); color: #000; }
+    .cta-primary:hover { filter: brightness(1.1); }
+    .cta-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .cta-secondary:hover { border-color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Selvr</span>
+  <span class="logo-sub">Code Comparison</span>
+  <nav class="header-nav">
+    <a href="why-SELVR.html">Why Selvr?</a>
+    <a href="../playground/index.html">Playground</a>
+    <a href="../benchmarks/startup.html">Benchmarks</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>
+    <span class="ts-color">TypeScript</span>
+    <span class="vs">vs</span>
+    <span class="vx-color">Selvr</span>
+  </h1>
+  <p>
+    Five representative tasks, shown side by side.
+    Selvr syntax is intentionally close to TypeScript — existing TypeScript
+    developers can read it immediately. The differences are deliberate upgrades.
+  </p>
+</div>
+
+<!-- Task nav -->
+<div class="tasks-nav">
+  <button class="task-tab active" data-task="0">1. Functions & Types</button>
+  <button class="task-tab" data-task="1">2. Null Safety</button>
+  <button class="task-tab" data-task="2">3. Error Handling</button>
+  <button class="task-tab" data-task="3">4. Pattern Matching</button>
+  <button class="task-tab" data-task="4">5. Async & Fetch</button>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- Task 1: Functions & Types                                       -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+<div class="comparisons">
+
+<div class="comparison-block active" id="task-0">
+  <div class="block-header">
+    <div class="block-number">1</div>
+    <div>
+      <div class="block-title">Functions &amp; Types</div>
+      <div class="block-sub">How each language defines typed functions and variables</div>
+    </div>
+  </div>
+
+  <div class="code-split">
+    <div class="code-panel ts-panel">
+      <div class="code-lang"><span class="lang-dot ts-dot"></span> TypeScript</div>
+      <pre><span class="cmt">// TypeScript — `number` is the only numeric type</span>
+<span class="cmt">// No distinction between int and float</span>
+
+<span class="kw">function</span> <span class="fn">add</span>(a: <span class="typ">number</span>, b: <span class="typ">number</span>): <span class="typ">number</span> {
+    <span class="kw">return</span> a + b;
+}
+
+<span class="cmt">// Type `any` is always a valid escape hatch</span>
+<span class="kw">function</span> <span class="fn">doAnything</span>(x: <span class="typ">any</span>): <span class="typ">any</span> {
+    <span class="kw">return</span> x.whatever.doesnt.exist; <span class="cmt">// compiles fine!</span>
+}
+
+<span class="kw">const</span> x: <span class="typ">number</span> = <span class="num">42</span>;
+<span class="kw">let</span> y = <span class="num">3.14</span>; <span class="cmt">// same type as x</span>
+
+<span class="cmt">// Implicit coercions compile silently:</span>
+<span class="kw">const</span> total = x + <span class="str">"5"</span>; <span class="cmt">// "425" — surprise!</span></pre>
+    </div>
+    <div class="code-panel vx-panel">
+      <div class="code-lang"><span class="lang-dot vx-dot"></span> Selvr</div>
+      <pre><span class="cmt">// Selvr — precise numeric types catch bugs early</span>
+<span class="cmt">// `number` alias exists for TypeScript familiarity</span>
+
+<span class="kw">fn</span> <span class="fn">add</span>(a: <span class="typ">i32</span>, b: <span class="typ">i32</span>): <span class="typ">i32</span> {
+    <span class="kw">return</span> a + b;
+}
+
+<span class="cmt">// `any` does not exist — every value has a known type</span>
+<span class="cmt">// fn broken(x: any) — COMPILE ERROR: `any` is not a type</span>
+
+<span class="kw">const</span> x: <span class="typ">i32</span>  = <span class="num">42</span>;
+<span class="kw">const</span> y: <span class="typ">f64</span>  = <span class="num">3.14</span>; <span class="cmt">// different type to x</span>
+
+<span class="cmt">// Implicit coercions are compile errors:</span>
+<span class="cmt">// const total = x + "5"; — ERROR: cannot add i32 and string</span>
+<span class="kw">const</span> total = x + <span class="fn">parseInt</span>(<span class="str">"5"</span>).unwrapOr(<span class="num">0</span>);</pre>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Same colon syntax</strong> TypeScript developers can read Selvr function signatures immediately. The only difference is <code>fn</code> instead of <code>function</code>.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Precise numeric types</strong> <code>i32</code>, <code>i64</code>, <code>f32</code>, <code>f64</code> — no silent integer overflow or float precision surprises. The <code>number</code> alias is available for teams migrating from TypeScript.</div>
+    </div>
+    <div class="callout bad">
+      <span class="callout-icon">✗ TS</span>
+      <div><strong>TypeScript's <code>any</code> is a full type-safety exit hatch.</strong> In large codebases it spreads silently and can disable the type checker for whole call chains. Selvr has no <code>any</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- Task 2: Null Safety                                             -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+
+<div class="comparison-block" id="task-1">
+  <div class="block-header">
+    <div class="block-number">2</div>
+    <div>
+      <div class="block-title">Null Safety</div>
+      <div class="block-sub">How each language handles absent values</div>
+    </div>
+  </div>
+
+  <div class="code-split">
+    <div class="code-panel ts-panel">
+      <div class="code-lang"><span class="lang-dot ts-dot"></span> TypeScript</div>
+      <pre><span class="cmt">// TypeScript — optional types via T | undefined | null</span>
+<span class="cmt">// Requires --strictNullChecks to be useful at all</span>
+
+<span class="kw">interface</span> <span class="typ">User</span> {
+    name: <span class="typ">string</span>;
+    email?: <span class="typ">string</span>; <span class="cmt">// string | undefined</span>
+}
+
+<span class="kw">function</span> <span class="fn">getEmail</span>(u: <span class="typ">User</span>): <span class="typ">string</span> | <span class="typ">undefined</span> {
+    <span class="kw">return</span> u.email;
+}
+
+<span class="cmt">// Easy to forget the check:</span>
+<span class="kw">const</span> upper = getEmail(user).toUpperCase(); <span class="cmt">// runtime crash!</span>
+
+<span class="cmt">// Correct, but verbose:</span>
+<span class="kw">const</span> safe = getEmail(user)?.toUpperCase() ?? <span class="str">"(none)"</span>;
+
+<span class="cmt">// TypeScript still allows:</span>
+<span class="kw">const</span> bad: <span class="typ">string</span> = <span class="kw">null</span> <span class="kw">as</span> <span class="typ">any</span>; <span class="cmt">// compiles!</span></pre>
+    </div>
+    <div class="code-panel vx-panel">
+      <div class="code-lang"><span class="lang-dot vx-dot"></span> Selvr</div>
+      <pre><span class="cmt">// Selvr — no null, no undefined, no exceptions</span>
+<span class="cmt">// Absence is a typed value: Option&lt;T&gt;</span>
+
+<span class="kw">struct</span> <span class="typ">User</span> {
+    name: <span class="typ">string</span>;
+    email: <span class="typ">Option</span>&lt;<span class="typ">string</span>&gt;; <span class="cmt">// explicit, always</span>
+}
+
+<span class="kw">fn</span> <span class="fn">getEmail</span>(u: <span class="typ">User</span>): <span class="typ">Option</span>&lt;<span class="typ">string</span>&gt; {
+    <span class="kw">return</span> u.email;
+}
+
+<span class="cmt">// The compiler forces you to handle absence:</span>
+<span class="cmt">// const upper = getEmail(user).toUpperCase(); — COMPILE ERROR</span>
+<span class="cmt">// Option&lt;string&gt; has no method `toUpperCase`</span>
+
+<span class="cmt">// Clean, enforced pattern:</span>
+<span class="kw">const</span> safe = getEmail(user)
+    .map((e) => e.toUpperCase())
+    .unwrapOr(<span class="str">"(none)"</span>);</pre>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Option&lt;T&gt; is explicit and enforced at compile time.</strong> There is no way to call a method on an absent value — the compiler rejects it. TypeScript's <code>T | undefined</code> requires <code>--strictNullChecks</code> and still allows <code>any</code>-based bypasses.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>No <code>null</code> or <code>undefined</code> in the language at all.</strong> These concepts simply don't exist. The billion-dollar mistake is not possible.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div><strong>Option is an enum, not special syntax.</strong> <code>map</code>, <code>andThen</code>, <code>unwrapOr</code>, and <code>?</code> work on any <code>Option&lt;T&gt;</code>. TypeScript developers familiar with functional patterns will feel at home immediately.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- Task 3: Error Handling                                          -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+
+<div class="comparison-block" id="task-2">
+  <div class="block-header">
+    <div class="block-number">3</div>
+    <div>
+      <div class="block-title">Error Handling</div>
+      <div class="block-sub">Typed errors vs. thrown exceptions</div>
+    </div>
+  </div>
+
+  <div class="code-split">
+    <div class="code-panel ts-panel">
+      <div class="code-lang"><span class="lang-dot ts-dot"></span> TypeScript</div>
+      <pre><span class="cmt">// TypeScript — errors are thrown (invisible in types)</span>
+<span class="cmt">// The caller has no idea this function can fail</span>
+
+<span class="kw">async function</span> <span class="fn">fetchUser</span>(id: <span class="typ">number</span>): <span class="typ">Promise</span>&lt;<span class="typ">User</span>&gt; {
+    <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`/api/users/</span>${id}<span class="str">`</span>);
+    <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">"Network error"</span>);
+    <span class="kw">return</span> res.json(); <span class="cmt">// can also throw!</span>
+}
+
+<span class="cmt">// All error paths are invisible:</span>
+<span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">fetchUser</span>(<span class="num">1</span>); <span class="cmt">// might throw, nothing warns you</span>
+
+<span class="cmt">// To handle safely, must know to wrap in try/catch:</span>
+<span class="kw">try</span> {
+    <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">fetchUser</span>(<span class="num">1</span>);
+    console.log(user.name);
+} <span class="kw">catch</span> (e: <span class="typ">unknown</span>) {
+    console.error(<span class="str">"failed"</span>); <span class="cmt">// e has type `unknown`</span>
+}</pre>
+    </div>
+    <div class="code-panel vx-panel">
+      <div class="code-lang"><span class="lang-dot vx-dot"></span> Selvr</div>
+      <pre><span class="cmt">// Selvr — errors are values, visible in the return type</span>
+<span class="cmt">// The type signature tells you everything that can go wrong</span>
+
+<span class="kw">async fn</span> <span class="fn">fetchUser</span>(id: <span class="typ">i32</span>): <span class="typ">Result</span>&lt;<span class="typ">User</span>, <span class="typ">FetchError</span>&gt; {
+    <span class="kw">const</span> res = fetch(<span class="str">`/api/users/</span>${id}<span class="str">`</span>).await?; <span class="cmt">// ? = propagate on err</span>
+    <span class="kw">const</span> user = res.json&lt;<span class="typ">User</span>&gt;().await?;
+    <span class="kw">return</span> Ok(user);
+}
+
+<span class="cmt">// Compiler REQUIRES you to handle both cases:</span>
+<span class="kw">match</span> fetchUser(<span class="num">1</span>).await {
+    Ok(user)    => console.log(user.name),
+    Err(FetchError.NotFound) => console.log(<span class="str">"not found"</span>),
+    Err(e)      => console.log(<span class="str">`error: </span>${e}<span class="str">`</span>),
+}
+
+<span class="cmt">// Or propagate with ? — readable error chains</span>
+<span class="kw">const</span> user = fetchUser(<span class="num">1</span>).await?;</pre>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout bad">
+      <span class="callout-icon">✗ TS</span>
+      <div><strong>TypeScript's exception model is invisible.</strong> A function that throws <code>Error</code> looks identical to one that doesn't. There is no way to know which functions can fail without reading their implementation.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Result&lt;T, E&gt; makes failure explicit in the type.</strong> You can see from the signature exactly what can go wrong, and the compiler forces you to handle it — or explicitly propagate with <code>?</code>.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div><strong>The <code>?</code> operator is zero-cost syntactic sugar.</strong> <code>value?</code> desugars to <em>if Err(e), return Err(e); else unwrap Ok(v)</em> — identical to what you'd write manually, but concise.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- Task 4: Pattern Matching                                        -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+
+<div class="comparison-block" id="task-3">
+  <div class="block-header">
+    <div class="block-number">4</div>
+    <div>
+      <div class="block-title">Pattern Matching</div>
+      <div class="block-sub">Exhaustive branching on data shapes</div>
+    </div>
+  </div>
+
+  <div class="code-split">
+    <div class="code-panel ts-panel">
+      <div class="code-lang"><span class="lang-dot ts-dot"></span> TypeScript</div>
+      <pre><span class="cmt">// TypeScript — discriminated unions + switch</span>
+
+<span class="kw">type</span> <span class="typ">Shape</span> =
+  | { kind: <span class="str">"circle"</span>;    radius: <span class="typ">number</span> }
+  | { kind: <span class="str">"rectangle"</span>; width: <span class="typ">number</span>; height: <span class="typ">number</span> }
+  | { kind: <span class="str">"triangle"</span>;  base: <span class="typ">number</span>;  height: <span class="typ">number</span> };
+
+<span class="kw">function</span> <span class="fn">area</span>(s: <span class="typ">Shape</span>): <span class="typ">number</span> {
+  <span class="kw">switch</span> (s.kind) {
+    <span class="kw">case</span> <span class="str">"circle"</span>:    <span class="kw">return</span> Math.PI * s.radius ** <span class="num">2</span>;
+    <span class="kw">case</span> <span class="str">"rectangle"</span>: <span class="kw">return</span> s.width * s.height;
+    <span class="kw">case</span> <span class="str">"triangle"</span>:  <span class="kw">return</span> <span class="num">0.5</span> * s.base * s.height;
+    <span class="cmt">// Forgetting a case is NOT a compile error</span>
+    <span class="cmt">// unless you use a never-type trick</span>
+  }
+  <span class="kw">return</span> <span class="num">0</span>; <span class="cmt">// fallback required</span>
+}</pre>
+    </div>
+    <div class="code-panel vx-panel">
+      <div class="code-lang"><span class="lang-dot vx-dot"></span> Selvr</div>
+      <pre><span class="cmt">// Selvr — algebraic enum + exhaustive match</span>
+
+<span class="kw">enum</span> <span class="typ">Shape</span> {
+    Circle    { radius: <span class="typ">f64</span>; },
+    Rectangle { width: <span class="typ">f64</span>; height: <span class="typ">f64</span>; },
+    Triangle  { base: <span class="typ">f64</span>;  height: <span class="typ">f64</span>; },
+}
+
+<span class="kw">fn</span> <span class="fn">area</span>(s: <span class="typ">Shape</span>): <span class="typ">f64</span> {
+    <span class="kw">return</span> match s {
+        Shape.Circle    { radius }        => Math.PI * radius * radius,
+        Shape.Rectangle { width, height } => width * height,
+        Shape.Triangle  { base, height }  => <span class="num">0.5</span> * base * height,
+        <span class="cmt">// Removing any arm = COMPILE ERROR: non-exhaustive match</span>
+    };
+}
+
+<span class="cmt">// Guards, ranges, or-patterns — all in one expression</span>
+<span class="kw">const</span> label = match score {
+    <span class="num">90</span>..<span class="num">=100</span> => <span class="str">"A"</span>,
+    <span class="num">80</span>..<span class="num">=89</span>  => <span class="str">"B"</span>,
+    x <span class="kw">if</span> x &lt; <span class="num">0</span> => <span class="str">"invalid"</span>,
+    _ => <span class="str">"C or below"</span>,
+};</pre>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>match is exhaustive by default.</strong> Adding a new variant to an enum causes all existing match expressions to become compile errors — you can never forget to handle a new case.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>match is an expression, not a statement.</strong> It returns a value — no need for <code>let result; switch (...) { case ...: result = ...; }</code> patterns.</div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">△</span>
+      <div><strong>TypeScript requires a <code>never</code>-based trick for exhaustiveness.</strong> <code>const _: never = s;</code> in the <code>default</code> branch. It works, but it's not built in to <code>switch</code> itself.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- Task 5: Async & Fetch                                           -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+
+<div class="comparison-block" id="task-4">
+  <div class="block-header">
+    <div class="block-number">5</div>
+    <div>
+      <div class="block-title">Async &amp; Fetch</div>
+      <div class="block-sub">Async/await and typed network requests</div>
+    </div>
+  </div>
+
+  <div class="code-split">
+    <div class="code-panel ts-panel">
+      <div class="code-lang"><span class="lang-dot ts-dot"></span> TypeScript</div>
+      <pre><span class="kw">interface</span> <span class="typ">Post</span> { id: <span class="typ">number</span>; title: <span class="typ">string</span>; body: <span class="typ">string</span>; }
+
+<span class="kw">async function</span> <span class="fn">loadPost</span>(id: <span class="typ">number</span>): <span class="typ">Promise</span>&lt;<span class="typ">Post</span>&gt; {
+    <span class="kw">const</span> res  = <span class="kw">await</span> fetch(<span class="str">`/api/posts/</span>${id}<span class="str">`</span>);
+    <span class="kw">const</span> post = <span class="kw">await</span> res.json() <span class="kw">as</span> <span class="typ">Post</span>; <span class="cmt">// unsafe cast!</span>
+    <span class="kw">return</span> post;
+}
+
+<span class="cmt">// No forced error handling — this compiles without try/catch</span>
+<span class="kw">const</span> post = <span class="kw">await</span> <span class="fn">loadPost</span>(<span class="num">1</span>);
+console.log(post.title); <span class="cmt">// crashes if fetch fails</span>
+
+<span class="cmt">// Concurrent requests via Promise.all</span>
+<span class="kw">const</span> [a, b] = <span class="kw">await</span> Promise.all([
+    <span class="fn">loadPost</span>(<span class="num">1</span>),
+    <span class="fn">loadPost</span>(<span class="num">2</span>),
+]);</pre>
+    </div>
+    <div class="code-panel vx-panel">
+      <div class="code-lang"><span class="lang-dot vx-dot"></span> Selvr</div>
+      <pre><span class="kw">struct</span> <span class="typ">Post</span> { id: <span class="typ">i32</span>; title: <span class="typ">string</span>; body: <span class="typ">string</span>; }
+
+<span class="kw">async fn</span> <span class="fn">loadPost</span>(id: <span class="typ">i32</span>): <span class="typ">Result</span>&lt;<span class="typ">Post</span>, <span class="typ">FetchError</span>&gt; {
+    <span class="kw">const</span> res  = fetch(<span class="str">`/api/posts/</span>${id}<span class="str">`</span>).await?; <span class="cmt">// ? propagates</span>
+    <span class="kw">const</span> post = res.json&lt;<span class="typ">Post</span>&gt;().await?; <span class="cmt">// type-safe deserialize</span>
+    <span class="kw">return</span> Ok(post);
+}
+
+<span class="cmt">// Compiler REQUIRES handling the error case</span>
+<span class="kw">match</span> loadPost(<span class="num">1</span>).await {
+    Ok(post) => console.log(post.title),
+    Err(e)   => console.log(<span class="str">`Error: </span>${e}<span class="str">`</span>),
+}
+
+<span class="cmt">// Concurrent — same semantics as Promise.all</span>
+<span class="kw">const</span> [a, b] = join!(loadPost(<span class="num">1</span>), loadPost(<span class="num">2</span>)).await;</pre>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout bad">
+      <span class="callout-icon">✗ TS</span>
+      <div><strong><code>res.json() as Post</code> is an unchecked cast.</strong> TypeScript trusts you to get the shape right. If the API returns a different shape at runtime, you get silent <code>undefined</code> fields — no compile error, no runtime error until you access the field.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Selvr's <code>json&lt;T&gt;()</code> validates at the boundary.</strong> If the JSON doesn't match the struct, you get an <code>Err</code> — not a silent crash later in the program.</div>
+    </div>
+    <div class="callout good">
+      <span class="callout-icon">✓</span>
+      <div><strong>Async/await syntax is identical.</strong> If you know <code>async/await</code> in TypeScript, you know it in Selvr. The only difference is <code>.await</code> (postfix) instead of <code>await expr</code> (prefix) — which composes more naturally in chains.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .comparisons -->
+
+<!-- ── Summary table ── -->
+<div class="summary-section">
+  <div class="summary-title">Feature comparison at a glance</div>
+  <div class="summary-sub">How the two languages handle the same problems</div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>TypeScript</th>
+        <th>Selvr</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="feature">Null safety</td>
+        <td><span class="meh">△</span> Optional with <code>--strictNullChecks</code>, bypassed by <code>any</code></td>
+        <td><span class="check">✓</span> No <code>null</code> or <code>undefined</code> in the language</td>
+      </tr>
+      <tr>
+        <td class="feature">Error handling</td>
+        <td><span class="meh">△</span> Thrown exceptions — invisible in types</td>
+        <td><span class="check">✓</span> <code>Result&lt;T, E&gt;</code> — errors visible in every signature</td>
+      </tr>
+      <tr>
+        <td class="feature">Exhaustive matching</td>
+        <td><span class="meh">△</span> Requires <code>never</code>-type trick in <code>switch</code></td>
+        <td><span class="check">✓</span> <code>match</code> is exhaustive by default</td>
+      </tr>
+      <tr>
+        <td class="feature">Type escape hatch</td>
+        <td><span class="cross">✗</span> <code>any</code>, <code>as unknown as T</code></td>
+        <td><span class="check">✓</span> No <code>any</code>; <code>as</code> only valid between compatible types</td>
+      </tr>
+      <tr>
+        <td class="feature">Memory management</td>
+        <td><span class="meh">△</span> Garbage collected — unpredictable GC pauses</td>
+        <td><span class="check">✓</span> Ownership model — deterministic, GC-free</td>
+      </tr>
+      <tr>
+        <td class="feature">Familiar syntax</td>
+        <td><span class="check">✓</span> Baseline</td>
+        <td><span class="check">✓</span> Identical to TypeScript in most places</td>
+      </tr>
+      <tr>
+        <td class="feature">Cold start speed</td>
+        <td><span class="meh">△</span> JS parse tax on every cold load</td>
+        <td><span class="check">✓</span> Bytecode — no parser, ~8–12× faster cold start</td>
+      </tr>
+      <tr>
+        <td class="feature">Runtime performance</td>
+        <td><span class="meh">△</span> JIT-optimised, but GC pauses cause jank</td>
+        <td><span class="check">✓</span> Compiled to native bytecode, GC-pause-free</td>
+      </tr>
+      <tr>
+        <td class="feature">Generics</td>
+        <td><span class="check">✓</span> Generic types with <code>&lt;T&gt;</code></td>
+        <td><span class="check">✓</span> Same <code>&lt;T&gt;</code> syntax, monomorphised at compile time</td>
+      </tr>
+      <tr>
+        <td class="feature">Pattern matching</td>
+        <td><span class="cross">✗</span> No native <code>match</code></td>
+        <td><span class="check">✓</span> First-class <code>match</code> expression with guards</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="cta-wrap">
+  <a href="../playground/index.html" class="cta-btn cta-primary">Try Selvr in the Playground →</a>
+  <a href="why-SELVR.html" class="cta-btn cta-secondary">Read "Why Selvr?"</a>
+  <a href="../benchmarks/startup.html" class="cta-btn cta-secondary">Run the Benchmark</a>
+</div>
+
+<script>
+document.querySelectorAll('.task-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.task-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.comparison-block').forEach(b => b.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`task-${tab.dataset.task}`).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

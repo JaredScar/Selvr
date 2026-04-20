@@ -1,0 +1,36 @@
+# Rust / Cargo
+/target/
+**/*.rs.bk
+
+# Profiling / coverage
+*.profraw
+*.profdata
+coverage/
+lcov.info
+tarpaulin-report.html
+
+# IDE & editors
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node (VS Code extension)
+editors/vscode/node_modules/
+editors/vscode/dist/
+editors/vscode/*.vsix
+
+# Local env & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & temp
+*.log
+*.tmp

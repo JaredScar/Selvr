@@ -1,0 +1,216 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Selvr",
+  "scopeName": "source.selvr",
+  "fileTypes": ["self"],
+  "patterns": [
+    { "include": "#line-comment" },
+    { "include": "#block-comment" },
+    { "include": "#attribute" },
+    { "include": "#string-template" },
+    { "include": "#string-double" },
+    { "include": "#string-single" },
+    { "include": "#number" },
+    { "include": "#keyword" },
+    { "include": "#type-keyword" },
+    { "include": "#control-keyword" },
+    { "include": "#fn-definition" },
+    { "include": "#struct-definition" },
+    { "include": "#enum-definition" },
+    { "include": "#trait-definition" },
+    { "include": "#fn-call" },
+    { "include": "#type-annotation" },
+    { "include": "#operator" },
+    { "include": "#punctuation" },
+    { "include": "#identifier" }
+  ],
+  "repository": {
+
+    "line-comment": {
+      "name":  "comment.line.double-slash.selvr",
+      "match": "//.*$"
+    },
+
+    "block-comment": {
+      "name":  "comment.block.selvr",
+      "begin": "/\\*",
+      "end":   "\\*/"
+    },
+
+    "attribute": {
+      "name":  "meta.attribute.selvr",
+      "match": "#\\[([a-zA-Z_][a-zA-Z0-9_]*)(?:\\(([^)]*)\\))?\\]",
+      "captures": {
+        "0": { "name": "entity.other.attribute-name.selvr" },
+        "1": { "name": "entity.other.attribute-name.selvr" },
+        "2": { "name": "string.unquoted.selvr" }
+      }
+    },
+
+    "string-template": {
+      "name":  "string.template.selvr",
+      "begin": "`",
+      "end":   "`",
+      "patterns": [
+        {
+          "name":  "meta.template.expression.selvr",
+          "begin": "\\$\\{",
+          "end":   "\\}",
+          "patterns": [{ "include": "$self" }]
+        },
+        { "name": "constant.character.escape.selvr", "match": "\\\\." }
+      ]
+    },
+
+    "string-double": {
+      "name":    "string.quoted.double.selvr",
+      "begin":   "\"",
+      "end":     "\"",
+      "patterns": [
+        { "name": "constant.character.escape.selvr", "match": "\\\\." }
+      ]
+    },
+
+    "string-single": {
+      "name":    "string.quoted.single.selvr",
+      "begin":   "'",
+      "end":     "'",
+      "patterns": [
+        { "name": "constant.character.escape.selvr", "match": "\\\\." }
+      ]
+    },
+
+    "number": {
+      "patterns": [
+        {
+          "name":  "constant.numeric.hex.selvr",
+          "match": "\\b0x[0-9a-fA-F_]+\\b"
+        },
+        {
+          "name":  "constant.numeric.binary.selvr",
+          "match": "\\b0b[01_]+\\b"
+        },
+        {
+          "name":  "constant.numeric.float.selvr",
+          "match": "\\b[0-9][0-9_]*\\.[0-9_]*(?:[eE][+-]?[0-9_]+)?\\b"
+        },
+        {
+          "name":  "constant.numeric.integer.selvr",
+          "match": "\\b[0-9][0-9_]*\\b"
+        }
+      ]
+    },
+
+    "keyword": {
+      "patterns": [
+        {
+          "name":  "keyword.other.selvr",
+          "match": "\\b(import|export|mod|as|in|from)\\b"
+        },
+        {
+          "name":  "storage.modifier.selvr",
+          "match": "\\b(async|await|pub)\\b"
+        },
+        {
+          "name":  "constant.language.selvr",
+          "match": "\\b(true|false|null|undefined|void)\\b"
+        },
+        {
+          "name":  "keyword.declaration.selvr",
+          "match": "\\b(fn|struct|enum|trait|impl|type|const|let)\\b"
+        }
+      ]
+    },
+
+    "control-keyword": {
+      "name":  "keyword.control.selvr",
+      "match": "\\b(if|else|while|for|return|break|continue|match|yield|throw|try|catch|finally)\\b"
+    },
+
+    "type-keyword": {
+      "name":  "support.type.primitive.selvr",
+      "match": "\\b(i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|f32|f64|bool|string|char|Self)\\b"
+    },
+
+    "fn-definition": {
+      "name":  "meta.function.selvr",
+      "match": "\\b(fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?:<[^>]*>)?\\s*\\(",
+      "captures": {
+        "1": { "name": "keyword.declaration.selvr" },
+        "2": { "name": "entity.name.function.selvr" }
+      }
+    },
+
+    "struct-definition": {
+      "name":  "meta.struct.selvr",
+      "match": "\\b(struct)\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.selvr" },
+        "2": { "name": "entity.name.type.selvr" }
+      }
+    },
+
+    "enum-definition": {
+      "name":  "meta.enum.selvr",
+      "match": "\\b(enum)\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.selvr" },
+        "2": { "name": "entity.name.type.selvr" }
+      }
+    },
+
+    "trait-definition": {
+      "name":  "meta.trait.selvr",
+      "match": "\\b(trait)\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.selvr" },
+        "2": { "name": "entity.name.type.selvr" }
+      }
+    },
+
+    "fn-call": {
+      "name":  "meta.function-call.selvr",
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.call.selvr" }
+      }
+    },
+
+    "type-annotation": {
+      "match": ":\\s*([A-Z][a-zA-Z0-9_<>, ]*)",
+      "captures": {
+        "1": { "name": "entity.name.type.selvr" }
+      }
+    },
+
+    "operator": {
+      "name":  "keyword.operator.selvr",
+      "match": "(=>|->|\\.\\.=|\\.\\.|\\.\\*|&&|\\|\\||==|!=|<=|>=|<<|>>|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|[+\\-*/%&|^!~<>=?])"
+    },
+
+    "punctuation": {
+      "patterns": [
+        { "name": "punctuation.separator.comma.selvr",     "match": "," },
+        { "name": "punctuation.separator.semicolon.selvr", "match": ";" },
+        { "name": "punctuation.separator.colon.selvr",     "match": ":" },
+        { "name": "punctuation.section.braces.begin.selvr","match": "\\{" },
+        { "name": "punctuation.section.braces.end.selvr",  "match": "\\}" },
+        { "name": "punctuation.section.brackets.selvr",    "match": "[\\[\\]]" },
+        { "name": "punctuation.section.parens.selvr",      "match": "[()]" }
+      ]
+    },
+
+    "identifier": {
+      "patterns": [
+        {
+          "name":  "entity.name.type.selvr",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name":  "variable.other.selvr",
+          "match": "\\b[a-z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

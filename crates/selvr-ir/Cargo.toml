@@ -1,0 +1,16 @@
+[package]
+name        = "selvr-ir"
+description = "Selvr mid-level intermediate representation (IR) and AST→IR lowering."
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+authors.workspace     = true
+
+[dependencies]
+selvr-parser      = { path = "../selvr-parser" }
+selvr-lexer       = { path = "../selvr-lexer" }
+selvr-typechecker = { path = "../selvr-typechecker" }
+smol_str          = { workspace = true }
+indexmap          = { workspace = true }
+thiserror         = { workspace = true }

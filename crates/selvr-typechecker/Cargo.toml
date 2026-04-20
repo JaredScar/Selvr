@@ -1,0 +1,15 @@
+[package]
+name        = "selvr-typechecker"
+description = "Type checker, inference engine, and borrow checker for Selvr"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+selvr-lexer  = { path = "../selvr-lexer" }
+selvr-parser = { path = "../selvr-parser" }
+indexmap     = { workspace = true }
+smol_str     = { workspace = true }
+miette       = { workspace = true }
+thiserror    = { workspace = true }

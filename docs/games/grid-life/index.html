@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Particle Storm — performance</title>
+  <title>Grid Life — performance</title>
   <style>
     :root {
       --bg: #0d0f14;
@@ -75,16 +75,13 @@
     article h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 24px 0 12px; }
     article p, article li { color: #cbd5e1; font-size: 15px; margin-bottom: 10px; }
     article ul { margin: 0 0 12px 1.2rem; }
-    article table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
-    article th, article td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
-    article th { background: rgba(19, 22, 31, 0.9); color: var(--text); }
     code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <header>
     <a class="logo" href="../../index.html">Docs</a>
-    <span class="crumb">Games · Particle Storm</span>
+    <span class="crumb">Games · Grid Life</span>
     <nav>
       <a href="selvr/index.html">Selvr-style only</a>
       <a href="typescript/index.html">TypeScript only</a>
@@ -93,27 +90,25 @@
   </header>
 
   <div class="hero">
-    <h1>Performance: data layout, not syntax sugar</h1>
+    <h1>2D grids: flat buffers vs rows of arrays</h1>
     <p>
-      Both panels run the <strong>same physics</strong> on <strong>48&nbsp;000</strong> particles and the same sparse draw (every 24th point).
-      The difference is <strong>memory layout</strong>: the TypeScript side uses a <strong>heap object per particle</strong> (a very common pattern);
-      the Selvr-style side uses <strong>struct-of-arrays</strong> (<code>Float64Array</code> blocks) with <strong>no allocations in the animation loop</strong> — what the Selvr compiler is aimed at emitting for hot simulation code.
+      Both panels run the <strong>same Conway’s Game of Life</strong> on a <strong>180×200</strong> torus-free grid with identical rules and the same pixel draw.
+      The TypeScript side uses a classic <strong><code>boolean[][]</code></strong> (nested arrays, indirect indexing); the Selvr-style side uses two <strong><code>Uint8Array</code></strong> planes with <strong><code>i = y * W + x</code></strong> addressing — the layout VMs and native code prefer for simulation kernels.
     </p>
     <p>
-      Watch <strong>FPS</strong> and <strong>physics ms/frame</strong>: the SoA path should stay higher / lower respectively on typical hardware.
-      Phase&nbsp;2 bytecode / WASM targets the same tight loops without shipping a giant parseable JS surface to the browser.
+      Compare <strong>FPS</strong> and <strong>step ms/frame</strong>: the flat-buffer path usually wins on cache locality and fewer indirections per cell.
     </p>
   </div>
 
   <div class="split">
     <div class="panel">
-      <div class="panel-h selvr">Selvr-style (SoA, no per-frame alloc)</div>
-      <iframe title="Selvr particle storm" src="selvr/index.html"></iframe>
+      <div class="panel-h selvr">Selvr-style (Uint8Array, flat index)</div>
+      <iframe title="Selvr grid life" src="selvr/index.html"></iframe>
       <a class="play" href="selvr/index.html">Open full page</a>
     </div>
     <div class="panel">
-      <div class="panel-h ts">TypeScript (Particle[] on the heap)</div>
-      <iframe title="TypeScript particle storm" src="typescript/index.html"></iframe>
+      <div class="panel-h ts">TypeScript (boolean[][])</div>
+      <iframe title="TypeScript grid life" src="typescript/index.html"></iframe>
       <a class="play" href="typescript/index.html">Open full page</a>
     </div>
   </div>
@@ -121,9 +116,8 @@
   <article>
     <h2>Why this is fair</h2>
     <ul>
-      <li>Same <code>N</code>, same integration, same canvas size, same draw stride — only the representation of particles differs.</li>
-      <li>TypeScript is not “wrong” — many codebases choose objects for clarity. Selvr’s pitch is that the <strong>compiler</strong> can lower structured code to fast buffers so you don’t hand-roll SoA.</li>
-      <li>This demo runs in the browser as JS today; Selvr’s <strong>bytecode VM</strong> is the next step for skipping parse/JIT on that hot path.</li>
+      <li>Same dimensions, same Life rules, same canvas scaling — only grid representation differs.</li>
+      <li>Nested <code>boolean[][]</code> is a natural way to express grids in TS; Selvr-style layout is what you get when lowering structured code to packed memory.</li>
     </ul>
 
     <h2>Rebuild TypeScript bundle</h2>

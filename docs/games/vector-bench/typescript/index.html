@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vector Bench — TypeScript</title>
+  <style>
+    body { margin: 0; background: #010409; color: #e6edf3; font-family: system-ui, sans-serif; padding: 16px; text-align: center; }
+    h1 { font-size: 0.95rem; color: #58a6ff; font-weight: 700; margin: 0 0 8px; }
+    .stats { font-family: ui-monospace, monospace; font-size: 0.85rem; color: #8b949e; margin-bottom: 10px; }
+    .stats strong { color: #58a6ff; }
+    canvas { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 0 0 1px #30363d; }
+  </style>
+</head>
+<body>
+  <h1>TypeScript · Vec3[] on the heap</h1>
+  <div class="stats">FPS ≈ <strong id="fps">—</strong> · compute <strong id="compute-ms">—</strong> ms/frame</div>
+  <canvas id="game-canvas" width="560" height="280" aria-label="Vector projection"></canvas>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

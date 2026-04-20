@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr — Games &amp; demos</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161f;
+      --border: #232736;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; padding-bottom: 48px; }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header a.logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    header .crumb { font-size: 13px; color: var(--muted); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    h1 { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .lead { color: var(--muted); font-size: 15px; max-width: 720px; margin-bottom: 28px; }
+    h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 28px 0 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 18px 16px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card:hover { border-color: #3d4a63; background: rgba(255,255,255,.02); }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 6px; }
+    .tag.correctness { color: var(--accent2); }
+    code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="../index.html">Docs</a>
+    <span class="crumb">Games</span>
+  </header>
+  <div class="wrap">
+    <h1>Games &amp; interactive demos</h1>
+    <p class="lead">
+      <strong>Performance</strong> demos compare the same workload with idiomatic TypeScript (objects, nested arrays) versus <strong>Selvr-style</strong> layouts (<code>TypedArray</code>, struct-of-arrays) that a compiler can emit for hot paths.
+      <strong>Correctness</strong> demos highlight integer precision. All run in static GitHub Pages builds.
+    </p>
+
+    <h2>Performance</h2>
+    <div class="grid">
+      <a class="card" href="particle-storm/index.html">
+        <span class="tag">Performance</span>
+        <h3>Particle Storm</h3>
+        <p>48k particles — <code>Particle[]</code> vs struct-of-arrays <code>Float64Array</code>; FPS and physics ms/frame.</p>
+      </a>
+      <a class="card" href="grid-life/index.html">
+        <span class="tag">Performance</span>
+        <h3>Grid Life</h3>
+        <p>Conway on 180×200 — <code>boolean[][]</code> vs flat <code>Uint8Array</code>; step time and FPS.</p>
+      </a>
+      <a class="card" href="vector-bench/index.html">
+        <span class="tag">Performance</span>
+        <h3>Vector Bench</h3>
+        <p>30k vectors — <code>{x,y,z}[]</code> vs packed <code>Float64Array</code>; batch normalize kernel.</p>
+      </a>
+    </div>
+
+    <h2>Correctness &amp; skill</h2>
+    <div class="grid">
+      <a class="card" href="core-harvest/index.html">
+        <span class="tag correctness">Correctness</span>
+        <h3>Core Harvest</h3>
+        <p>Same +1 harvest: IEEE-754 <code>number</code> vs exact integers past <code>MAX_SAFE_INTEGER</code>.</p>
+      </a>
+      <a class="card" href="orb-catcher/index.html">
+        <span class="tag correctness">Skill</span>
+        <h3>Orb Catcher</h3>
+        <p>Canvas reflex game — Selvr vs TypeScript builds side by side.</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

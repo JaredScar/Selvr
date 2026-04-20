@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Particle Storm — performance</title>
+  <title>Vector Bench — performance</title>
   <style>
     :root {
       --bg: #0d0f14;
@@ -61,7 +61,7 @@
     .panel-h { padding: 12px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
     .panel-h.selvr { color: var(--accent); }
     .panel-h.ts { color: var(--ts); }
-    .panel iframe { width: 100%; height: 520px; border: none; background: #010409; }
+    .panel iframe { width: 100%; height: 420px; border: none; background: #010409; }
     .panel a.play {
       padding: 10px 16px;
       text-align: center;
@@ -75,16 +75,13 @@
     article h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 24px 0 12px; }
     article p, article li { color: #cbd5e1; font-size: 15px; margin-bottom: 10px; }
     article ul { margin: 0 0 12px 1.2rem; }
-    article table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
-    article th, article td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
-    article th { background: rgba(19, 22, 31, 0.9); color: var(--text); }
     code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <header>
     <a class="logo" href="../../index.html">Docs</a>
-    <span class="crumb">Games · Particle Storm</span>
+    <span class="crumb">Games · Vector Bench</span>
     <nav>
       <a href="selvr/index.html">Selvr-style only</a>
       <a href="typescript/index.html">TypeScript only</a>
@@ -93,27 +90,28 @@
   </header>
 
   <div class="hero">
-    <h1>Performance: data layout, not syntax sugar</h1>
+    <h1>Batch math: objects vs packed buffers</h1>
     <p>
-      Both panels run the <strong>same physics</strong> on <strong>48&nbsp;000</strong> particles and the same sparse draw (every 24th point).
-      The difference is <strong>memory layout</strong>: the TypeScript side uses a <strong>heap object per particle</strong> (a very common pattern);
-      the Selvr-style side uses <strong>struct-of-arrays</strong> (<code>Float64Array</code> blocks) with <strong>no allocations in the animation loop</strong> — what the Selvr compiler is aimed at emitting for hot simulation code.
+      Both panels run the <strong>same workload</strong> on <strong>30&nbsp;000</strong> 3D vectors each frame: a small sinusoidal perturbation followed by <strong>normalize</strong>.
+      TypeScript keeps one <strong><code>{ x, y, z }</code></strong> object per vector; the Selvr-style path stores <strong><code>x,y,z</code></strong> contiguously in a single <strong><code>Float64Array</code></strong> — fewer indirections and better locality for numeric kernels.
     </p>
     <p>
-      Watch <strong>FPS</strong> and <strong>physics ms/frame</strong>: the SoA path should stay higher / lower respectively on typical hardware.
-      Phase&nbsp;2 bytecode / WASM targets the same tight loops without shipping a giant parseable JS surface to the browser.
+      The canvas shows a sparse polyline of projected <code>x/y</code> (cheap visual); the metric that matters is <strong>compute ms/frame</strong>.
+    </p>
+    <p>
+      <strong>Expect similar numbers on both sides.</strong> Here the loop is dominated by <strong><code>sin</code>, <code>cos</code>, and <code>sqrt</code></strong>, not by loading and storing vector components. Engines like V8 also optimize a uniform <code>{ x, y, z }</code> array to near–fixed-offset access, so packed buffers do not always look faster in plain JS — the point is the <strong>same workload</strong> expressed the way a compiler can lower to tight buffers and non-JS targets.
     </p>
   </div>
 
   <div class="split">
     <div class="panel">
-      <div class="panel-h selvr">Selvr-style (SoA, no per-frame alloc)</div>
-      <iframe title="Selvr particle storm" src="selvr/index.html"></iframe>
+      <div class="panel-h selvr">Selvr-style (packed f64)</div>
+      <iframe title="Selvr vector bench" src="selvr/index.html"></iframe>
       <a class="play" href="selvr/index.html">Open full page</a>
     </div>
     <div class="panel">
-      <div class="panel-h ts">TypeScript (Particle[] on the heap)</div>
-      <iframe title="TypeScript particle storm" src="typescript/index.html"></iframe>
+      <div class="panel-h ts">TypeScript (Vec3[])</div>
+      <iframe title="TypeScript vector bench" src="typescript/index.html"></iframe>
       <a class="play" href="typescript/index.html">Open full page</a>
     </div>
   </div>
@@ -121,9 +119,15 @@
   <article>
     <h2>Why this is fair</h2>
     <ul>
-      <li>Same <code>N</code>, same integration, same canvas size, same draw stride — only the representation of particles differs.</li>
-      <li>TypeScript is not “wrong” — many codebases choose objects for clarity. Selvr’s pitch is that the <strong>compiler</strong> can lower structured code to fast buffers so you don’t hand-roll SoA.</li>
-      <li>This demo runs in the browser as JS today; Selvr’s <strong>bytecode VM</strong> is the next step for skipping parse/JIT on that hot path.</li>
+      <li>Same <code>N</code>, same perturbation + normalize math, same lightweight draw — only vector storage differs.</li>
+      <li>This complements <a href="../particle-storm/index.html" style="color: var(--accent);">Particle Storm</a> (SoA for moving points) with a classic <strong>batch linear algebra</strong> shape.</li>
+    </ul>
+
+    <h2>Why speeds are often very similar</h2>
+    <ul>
+      <li><strong>Math-bound work</strong>: Most time goes into transcendental and <code>sqrt</code> calls, so memory layout is a smaller slice of the total than in demos that are mostly simple arithmetic over huge data (e.g. <a href="../particle-storm/index.html" style="color: var(--accent);">Particle Storm</a> or <a href="../grid-life/index.html" style="color: var(--accent);">Grid Life</a>).</li>
+      <li><strong>JIT-friendly objects</strong>: A <code>Vec3[]</code> of identical shapes is not “slow generic objects” in modern engines — property access often compiles to something close to struct field access.</li>
+      <li><strong>No per-frame allocation</strong> in the hot loop on either side, so this is not a GC comparison; Selvr’s packed-layout story matters more when you want predictable lowering to bytecode or WASM and when allocation would otherwise churn.</li>
     </ul>
 
     <h2>Rebuild TypeScript bundle</h2>

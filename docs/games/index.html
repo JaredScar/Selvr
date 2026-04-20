@@ -53,6 +53,7 @@
     .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
     .card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
     .tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 6px; }
+    .tag.wasm { color: #4ade80; margin-left: 6px; }
     .tag.correctness { color: var(--accent2); }
     .card-why { font-size: 12px; color: #94a3b8; margin-top: 10px; line-height: 1.5; border-top: 1px solid var(--border); padding-top: 10px; }
     code { font-size: 0.88em; background: var(--border); padding: 1px 6px; border-radius: 4px; }
@@ -66,11 +67,27 @@
   <div class="wrap">
     <h1>Games &amp; interactive demos</h1>
     <p class="lead">
-      <strong>Performance</strong> demos compare the same workload with idiomatic TypeScript (objects, nested arrays) versus <strong>Selvr-style</strong> layouts (<code>TypedArray</code>, struct-of-arrays) that a compiler can emit for hot paths.
+      <strong>Performance</strong> demos compare idiomatic TypeScript with <strong>Selvr-style</strong> data layouts (<code>TypedArray</code>, struct-of-arrays) or with real <strong>WebAssembly</strong> kernels plus a JavaScript shell — mirroring Selvr’s hybrid WASM/JS targeting. TypeScript itself always runs as JavaScript in the browser unless you add another toolchain.
       <strong>Correctness</strong> demos highlight integer precision. All run in static GitHub Pages builds.
     </p>
 
-    <h2>Performance</h2>
+    <h2>Performance · WASM + JS</h2>
+    <div class="grid">
+      <a class="card" href="wasm-dot-wave/index.html">
+        <span class="tag">Performance</span><span class="tag wasm">WASM</span>
+        <h3>Dot Wave</h3>
+        <p>4k× dot(512) per frame — inner product in a <code>.wasm</code> module vs the same loop in JavaScript only.</p>
+        <p class="card-why"><strong>vs TypeScript (JS only):</strong> float-heavy inner loops can live in WASM for native-ish throughput; TS compiles to JS, so the hot path stays in the JS engine unless you hand-roll WASM.</p>
+      </a>
+      <a class="card" href="wasm-fib-rush/index.html">
+        <span class="tag">Performance</span><span class="tag wasm">WASM</span>
+        <h3>Fib Rush</h3>
+        <p>25k× iterative <code>fib(35)</code> per frame — <code>i32</code> WASM loop vs JavaScript.</p>
+        <p class="card-why"><strong>vs TypeScript (JS only):</strong> same algorithm, different tier — WASM gives a compact integer loop without JS semantics overhead; compare compute ms/frame on the two panels.</p>
+      </a>
+    </div>
+
+    <h2>Performance · memory layout</h2>
     <div class="grid">
       <a class="card" href="particle-storm/index.html">
         <span class="tag">Performance</span>

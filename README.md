@@ -94,35 +94,38 @@ SELVR/
 
 ## Roadmap
 
-### Phase 1 — Language design & transpiler (current)
+### Phase 1 — Language design & transpiler
 
 - [x] Language specification (`SPEC.md`)
-- [x] Lexer
-- [x] Parser + AST
-- [x] Type checker scaffold (Hindley-Milner inference)
-- [x] JS code generator
-- [x] CLI (`selvr build`, `selvr run`, `selvr check`)
-- [ ] Complete type inference implementation
-- [ ] Borrow checker
-- [ ] Full standard library stubs
-- [ ] Source maps
-- [ ] Browser playground
+- [x] Lexer, parser, and AST
+- [x] Type inference and borrow checker (`selvr-typechecker`)
+- [x] JS code generator (`selvr-codegen`)
+- [x] CLI (`selvr build`, `selvr run`, `selvr check`, `selvr test`, `selvr fmt`, …)
+- [x] Standard library (`std/`)
+- [x] Source maps (`.self` ↔ generated JS)
+- [x] Browser playground (`playground/`)
 
 ### Phase 2 — Native bytecode VM
 
-- [ ] Bytecode format design
-- [ ] AST → IR → bytecode compiler
-- [ ] WebAssembly-hosted VM
-- [ ] DOM bindings
-- [ ] Benchmark vs. V8
+- [x] Bytecode format (`docs/BYTECODE.md`, `selvr-bytecode`)
+- [x] AST → IR → bytecode compiler (`selvr-ir`, `selvr-bytecode`)
+- [x] WebAssembly-hosted VM (`selvr-vm`)
+- [x] DOM bindings and browser runtime
+- [x] Benchmarks vs. V8 / JS (`benchmarks/`)
+- [ ] Baseline JIT for hot VM paths (stretch)
+
+### Phase 2.5 — Hybrid WASM / JS targeting
+
+- [x] Automatic per-function JS vs WASM routing, bridge codegen, and `selvr build --emit hybrid` (`selvr-target`, `selvr-bridge`)
 
 ### Phase 3 — Ecosystem
 
-- [ ] Package manager (`selvr add`, `selvr publish`)
-- [ ] LSP server + VS Code extension
-- [ ] Formatter (`selvr fmt`)
-- [ ] Linter (`selvr lint`)
-- [ ] Official website + documentation
+- [x] Package manager (`selvr add`, `selvr publish`, lockfiles; `selvr-pkg`)
+- [x] LSP server (`selvr-lsp`) and VS Code extension (`editors/vscode/`)
+- [x] Formatter (`selvr fmt`) and linter (`selvr lint`)
+- [x] Debugger adapter (`selvr dap`) and devtools integration (`std/devtools/`)
+- [ ] Official public website, book, and API reference
+- [ ] Community channels and 1.0 release
 
 ---
 

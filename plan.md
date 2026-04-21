@@ -232,7 +232,7 @@ Goal: make Selvr usable for real projects. Great tooling is what makes or breaks
 ### 3.4 Documentation & community
 - [ ] Build the official website (`selvr-lang.org` or similar)
 - [ ] Write "The Selvr Book" — a free online tutorial
-- [ ] Write the API reference
+- [x] Write the API reference — `docs/api/index.html` (GitHub Pages under `/docs`)
 - [ ] Set up a Discord or forum for early adopters
 - [ ] Create a contribution guide and code of conduct
 - [ ] Run a blog with design notes and progress updates

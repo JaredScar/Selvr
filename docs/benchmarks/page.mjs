@@ -17,11 +17,19 @@ import {
   measurePrepared,
   fmtTime,
   fmtRatio,
+  median,
 } from "./browser-bench.mjs";
 
 const statusEl = document.querySelector("#status");
 const runBtn = document.querySelector("#run");
-const checksEl = document.querySelector("#checks");
+
+const REACT_URL = "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js";
+const REACT_DOM_URL = "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js";
+const VUE_URL = "https://cdn.jsdelivr.net/npm/vue@3.5.22/dist/vue.runtime.global.prod.js";
+const ZONE_URL = "https://esm.sh/zone.js@0.15.1";
+const NG_COMPILER_URL = "https://esm.sh/@angular/compiler@19.2.15";
+const NG_CORE_URL = "https://esm.sh/@angular/core@19.2.15";
+const NG_BROWSER_URL = "https://esm.sh/@angular/platform-browser@19.2.15";
 
 const bc = {};
 let vmReady = false;
@@ -155,13 +163,178 @@ function renderRow(id, timed, expect) {
   return ok;
 }
 
+function withFrame(setup) {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;border:0";
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("timed out"));
+    }, 20000);
+    function cleanup() {
+      clearTimeout(timer);
+      window.removeEventListener("message", onMsg);
+      iframe.remove();
+    }
+    function onMsg(ev) {
+      if (ev.source !== win) return;
+      cleanup();
+      if (ev.data && ev.data.ok) resolve(ev.data.text);
+      else reject(new Error((ev.data && ev.data.error) || "startup failed"));
+    }
+    window.addEventListener("message", onMsg);
+    try {
+      setup(doc, win);
+    } catch (err) {
+      cleanup();
+      reject(err);
+    }
+  });
+}
+
+function addScript(doc, code, type) {
+  const script = doc.createElement("script");
+  if (type) script.type = type;
+  script.textContent = code;
+  doc.body.appendChild(script);
+}
+
+let reactSrc = "";
+let reactDomSrc = "";
+let vueSrc = "";
+
+async function prefetchFrameworks() {
+  const load = async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`could not fetch ${url} (${res.status})`);
+    return res.text();
+  };
+  [reactSrc, reactDomSrc, vueSrc] = await Promise.all([
+    load(REACT_URL),
+    load(REACT_DOM_URL),
+    load(VUE_URL),
+    load(ZONE_URL),
+    load(NG_COMPILER_URL),
+    load(NG_CORE_URL),
+    load(NG_BROWSER_URL),
+  ]).then((parts) => parts);
+}
+
+function startSelvr() {
+  const vmUrl = new URL("./vm/selvr_vm.js", import.meta.url).href;
+  const bcUrl = new URL("./selvr/fib.vlxc", import.meta.url).href;
+  return withFrame((doc) => {
+    addScript(doc, `
+      import init, { SELVR_load, SELVR_call } from ${JSON.stringify(vmUrl)};
+      try {
+        await init();
+        const res = await fetch(${JSON.stringify(bcUrl)});
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        SELVR_load(bytes);
+        const n = SELVR_call("fib", "[10]");
+        parent.postMessage({ ok: n === "55", text: n, error: "fib(10)=" + n }, "*");
+      } catch (err) {
+        parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
+      }
+    `, "module");
+  });
+}
+
+function startReact() {
+  return withFrame((doc) => {
+    addScript(doc, reactSrc);
+    addScript(doc, reactDomSrc);
+    addScript(doc, `
+      try {
+        const el = document.createElement("div");
+        document.body.appendChild(el);
+        const root = ReactDOM.createRoot(el);
+        ReactDOM.flushSync(() => {
+          root.render(React.createElement("span", null, "55"));
+        });
+        parent.postMessage({ ok: el.textContent === "55", text: el.textContent, error: el.textContent }, "*");
+      } catch (err) {
+        parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
+      }
+    `);
+  });
+}
+
+function startVue() {
+  return withFrame((doc) => {
+    addScript(doc, vueSrc);
+    addScript(doc, `
+      try {
+        const el = document.createElement("div");
+        document.body.appendChild(el);
+        Vue.createApp({ render: () => Vue.h("span", "55") }).mount(el);
+        parent.postMessage({ ok: el.textContent === "55", text: el.textContent, error: el.textContent }, "*");
+      } catch (err) {
+        parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
+      }
+    `);
+  });
+}
+
+function startAngular() {
+  return withFrame((doc) => {
+    addScript(doc, `
+      try {
+        await import(${JSON.stringify(ZONE_URL)});
+        await import(${JSON.stringify(NG_COMPILER_URL)});
+        const core = await import(${JSON.stringify(NG_CORE_URL)});
+        const browser = await import(${JSON.stringify(NG_BROWSER_URL)});
+        const App = core.Component({
+          selector: "bench-root",
+          standalone: true,
+          template: "<span>55</span>",
+        })(class {});
+        document.body.appendChild(document.createElement("bench-root"));
+        await browser.bootstrapApplication(App);
+        const host = document.querySelector("bench-root");
+        const text = host ? host.textContent : "";
+        parent.postMessage({ ok: text === "55", text, error: text || "no host" }, "*");
+      } catch (err) {
+        parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
+      }
+    `, "module");
+  });
+}
+
+async function timeStartup(once) {
+  await once();
+  const times = [];
+  for (let i = 0; i < 5; i++) {
+    const t0 = performance.now();
+    await once();
+    times.push((performance.now() - t0) * 1e6);
+  }
+  return median(times);
+}
+
+async function fillStartup(cls, once) {
+  const cell = document.querySelector("#row-startup ." + cls);
+  try {
+    cell.textContent = fmtTime(await timeStartup(once));
+    cell.classList.remove("fail");
+    cell.removeAttribute("title");
+  } catch (err) {
+    cell.textContent = "failed";
+    cell.classList.add("fail");
+    cell.title = err && err.message ? err.message : String(err);
+  }
+}
+
 async function run() {
   runBtn.disabled = true;
-  checksEl.textContent = "";
   for (const id of ["#row-fib", "#row-sieve", "#row-matmul"]) {
     fill(id, { result: "—", vm: "—", js: "—", plain: "—", ratio: "—" });
   }
-  const notes = [];
+  fill("#row-startup", { vm: "—", react: "—", vue: "—", angular: "—" });
   try {
     setStatus("Loading selvr-vm…");
     await paint();
@@ -170,14 +343,11 @@ async function run() {
       await loadBytecode();
       vmReady = true;
     }
-    setStatus("Checking fib(10), sieve, and 2×2 matmul…");
-    await paint();
     const checkItems = [
       jobs[0].check(),
       ...jobs[1].checks(),
       jobs[2].check(),
     ];
-    for (const item of checkItems) notes.push(item.ok ? item.label : `${item.label} failed`);
     const checksOk = checkItems.every((item) => item.ok);
 
     let timedOk = true;
@@ -187,15 +357,38 @@ async function run() {
       const timed = job.time();
       timedOk = renderRow(job.id, timed, job.expect) && timedOk;
     }
-    checksEl.innerHTML = notes.map((text) => {
-      const ok = !text.endsWith("failed");
-      return `<span class="${ok ? "ok" : "fail"}">${text}</span>`;
-    }).join(" · ");
-    if (checksOk && timedOk) {
-      setStatus("Measured in this browser. The three implementations agreed.");
-    } else {
-      setStatus("A result did not match. The times above are still from this run.");
+
+    const startups = [
+      ["vm", "Selvr", startSelvr],
+      ["react", "React", startReact],
+      ["vue", "Vue", startVue],
+      ["angular", "Angular", startAngular],
+    ];
+    setStatus("Loading React, Vue, and Angular…");
+    await paint();
+    let startupOk = true;
+    try {
+      await prefetchFrameworks();
+    } catch (err) {
+      startupOk = false;
+      for (const cls of ["react", "vue", "angular"]) {
+        const cell = document.querySelector("#row-startup ." + cls);
+        cell.textContent = "failed";
+        cell.classList.add("fail");
+        cell.title = err && err.message ? err.message : String(err);
+      }
+      startups.length = 1;
     }
+    for (const [cls, label, once] of startups) {
+      setStatus(`Starting ${label}…`);
+      await paint();
+      await fillStartup(cls, once);
+      if (document.querySelector("#row-startup ." + cls).textContent === "failed") startupOk = false;
+    }
+
+    if (checksOk && timedOk && startupOk) setStatus("Measured in this browser.");
+    else if (!checksOk || !timedOk) setStatus("A result did not match.");
+    else setStatus("A startup did not finish.");
   } catch (err) {
     vmError = err && err.message ? err.message : String(err);
     setStatus(vmError);

@@ -15,14 +15,8 @@
     header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 12px; }
     .logo { font-size: 20px; font-weight: 800; color: var(--accent); text-decoration: none; }
     main { max-width: 980px; margin: 40px auto 80px; padding: 0 24px; }
-    h1 { font-size: 28px; margin-bottom: 12px; }
-    h2 { margin-top: 28px; font-size: 18px; }
-    p, li { color: var(--muted); line-height: 1.65; }
-    p { margin: 12px 0; }
-    ul { margin: 8px 0 8px 20px; }
-    code, pre { font-family: ui-monospace, Consolas, monospace; }
-    code { color: var(--text); background: var(--surface); padding: 1px 5px; border-radius: 4px; }
-    pre { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; border-radius: 8px; color: var(--text); overflow-x: auto; margin: 14px 0; }
+    h1 { font-size: 28px; margin-bottom: 18px; }
+    p { color: var(--muted); line-height: 1.65; margin: 0; }
     a { color: var(--accent); }
     .toolbar { display: flex; align-items: center; gap: 16px; margin: 18px 0; }
     button {
@@ -32,6 +26,7 @@
     button:disabled { opacity: 0.55; cursor: progress; }
     #status { margin: 0; }
     .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    .table-wrap + .table-wrap { margin-top: 28px; }
     table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
     th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; background: var(--surface); }
@@ -47,14 +42,6 @@
   </header>
   <main>
     <h1>Benchmarks</h1>
-    <p>
-      This page runs <code>fib</code>, <code>sieve</code>, and <code>matmul</code> in your browser.
-      <code>selvr-js</code> is the JavaScript produced by <code>selvr build</code>
-      (<code>selvr/fib.js</code>, <code>selvr/sieve.js</code>, <code>selvr/matmul.js</code>).
-      <code>selvr-vm</code> is the Selvr bytecode interpreter, compiled to WebAssembly,
-      executing the <code>.vlxc</code> files from <code>selvr build --emit bc</code>.
-      <code>plain-js</code> is the same algorithm written by hand.
-    </p>
     <div class="toolbar">
       <button id="run" type="button">Run again</button>
       <p id="status">Starting the run…</p>
@@ -88,36 +75,28 @@
         </tbody>
       </table>
     </div>
-    <p id="checks"></p>
-    <p>
-      Each cell is the median time of one call, from 5 samples. A sample repeats the call until the batch lasts at least 8&nbsp;ms, then divides by that count, so the browser timer can see short JavaScript loops. The VM is loaded again before each sample; that reload is outside the clock. Matrix inputs are built outside the clock. <code>vm / plain</code> is the interpreter time divided by the plain JavaScript time. On these loops the interpreter is expected to take longer than the JavaScript engine.
-    </p>
-    <p>
-      The numbers are measured in your browser when the page runs.
-      <code>selvr bench</code> times the same interpreter as a native binary. Calls from this page pass arguments as JSON:
-    </p>
-    <pre>cargo run -p selvr-cli --release -- bench</pre>
-
-    <h2>What is checked</h2>
-    <ul>
-      <li><code>fib(10) = 55</code>, then the timed run is <code>fib(40) = 102334155</code>.</li>
-      <li><code>sieve(10) = 4</code>, <code>sieve(100) = 25</code>, <code>sieve(10000) = 1229</code>.</li>
-      <li>A 2×2 matmul sums to <code>2.75</code>. The timed run is 32×32. All three implementations have to agree.</li>
-    </ul>
-    <h2>Compile times</h2>
-    <p>
-      <code>docs/benchmarks/compile.sh</code> times <code>selvr build --emit js</code>
-      and <code>selvr build --emit bc</code> on generated files of N tiny functions.
-      Those files are not an application. If <code>selvr</code> is missing, or a
-      compile fails, the script stops. <code>tsc</code> and <code>esbuild</code>
-      are timed only when they are installed.
-    </p>
-    <h2>Withdrawn</h2>
-    <p>
-      The old startup, time-to-interactive, and hybrid pages did not measure Selvr.
-      They compared filler bundles, handwritten loops, and a WASM module assembled
-      in the page. They are kept only so old links explain that.
-    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Startup</th>
+            <th>selvr-vm</th>
+            <th title="react 18.3.1 and react-dom 18.3.1">React</th>
+            <th title="vue 3.5.22">Vue</th>
+            <th title="Angular 19.2.15">Angular</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-startup">
+            <td>startup</td>
+            <td class="vm">—</td>
+            <td class="react">—</td>
+            <td class="vue">—</td>
+            <td class="angular">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </main>
   <script type="module" src="./page.mjs"></script>
 </body>

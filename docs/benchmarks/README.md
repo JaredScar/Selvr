@@ -1,6 +1,6 @@
 # Benchmarks
 
-`docs/benchmarks/index.html` runs the three programs in the browser when you open it. `selvr-js` is the committed output of `selvr build`. `selvr-vm` is this interpreter compiled to WebAssembly, executing the committed `.vlxc` files from `selvr build --emit bc`. `plain-js` is the same algorithm written by hand. `vm/` is produced by `cargo build -p selvr-vm --release --target wasm32-unknown-unknown` and `wasm-bindgen --target web`.
+`docs/benchmarks/index.html` runs the three programs in the browser when you open it, then times startup of `selvr-vm` against the published React 18, Vue 3, and Angular 19 builds. `selvr-js` is the committed output of `selvr build`. `selvr-vm` is this interpreter compiled to WebAssembly, executing the committed `.vlxc` files from `selvr build --emit bc`. `plain-js` is the same algorithm written by hand. `vm/` is produced by `cargo build -p selvr-vm --release --target wasm32-unknown-unknown` and `wasm-bindgen --target web`.
 
 `selvr bench` times the same programs with the native interpreter (no WebAssembly, no JSON argument boundary):
 

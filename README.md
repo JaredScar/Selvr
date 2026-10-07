@@ -2,7 +2,7 @@
 
 > **Compiled speed. Expressive syntax. Browser-native.**
 
-Selvr is a statically-typed, compiled language designed from the ground up to replace JavaScript in the browser. It ships pre-compiled bytecode — the browser skips parsing and JIT warm-up entirely. It has a sound type system, deterministic memory management (no GC), and first-class DOM, fetch, and event APIs.
+Selvr is a statically-typed language aimed at the browser. `selvr build` emits JavaScript, which the host still parses and JIT-compiles. A bytecode interpreter (`selvr-vm`) can run the same programs; on numeric loops it is generally slower than V8, which is the usual result for an interpreter. `selvr bench` measures that directly.
 
 ```SELVR
 async fn main() {
@@ -21,7 +21,7 @@ async fn main() {
 | Pain point | Selvr's answer |
 |---|---|
 | GC pauses drop animation frames | Ownership model — memory freed deterministically, zero GC |
-| JS parsed and JIT-compiled at runtime | Ships pre-compiled bytecode — cold start is microseconds |
+| JS parsed and JIT-compiled at runtime | The JS backend still emits JavaScript. The bytecode VM is an interpreter and does not remove the host's parse or JIT |
 | `typeof null === "object"` | Clean-slate semantics, no legacy baggage |
 | No native pattern matching | First-class `match` blocks |
 | Metaprogramming at runtime | Compile-time macros, zero runtime cost |
@@ -48,7 +48,9 @@ The `selvr` binary is placed at `target/release/selvr` (on Windows, `target\rele
 
 ```bash
 selvr build hello.self          # produces hello.js + hello.js.map
+selvr build hello.self --emit bc # produces hello.vlxc for selvr-vm
 selvr run hello.self            # compile + run with Node.js
+selvr bench                     # time fib, sieve, matmul: VM vs emitted JS vs plain JS
 selvr check hello.self          # type-check only
 selvr dump hello.self           # print the AST
 ```
@@ -111,7 +113,7 @@ SELVR/
 - [x] AST → IR → bytecode compiler (`selvr-ir`, `selvr-bytecode`)
 - [x] WebAssembly-hosted VM (`selvr-vm`)
 - [x] DOM bindings and browser runtime
-- [x] Benchmarks vs. V8 / JS (`docs/benchmarks/`)
+- [x] Runtime comparison of the bytecode VM, emitted JS, and plain JS (`selvr bench`, `docs/benchmarks/`)
 - [ ] Baseline JIT for hot VM paths (stretch)
 
 ### Phase 2.5 — Hybrid WASM / JS targeting

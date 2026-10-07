@@ -725,6 +725,7 @@ dependencies = [
  "clap",
  "miette",
  "selvr-bridge",
+ "selvr-bytecode",
  "selvr-codegen",
  "selvr-fmt",
  "selvr-ir",
@@ -734,6 +735,7 @@ dependencies = [
  "selvr-pkg",
  "selvr-target",
  "selvr-typechecker",
+ "selvr-vm",
  "serde_json",
  "thiserror",
 ]

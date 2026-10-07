@@ -330,17 +330,9 @@
     <summary class="accordion-summary">Benchmarks</summary>
     <div class="accordion-body">
     <div class="grid">
-      <a class="card" href="benchmarks/startup.html">
-        <h3>Startup &amp; parse time</h3>
-        <p>Cold start: Selvr output vs JS bundle parse cost.</p>
-      </a>
-      <a class="card" href="benchmarks/hybrid.html">
-        <h3>Hybrid targeting</h3>
-        <p>JS vs WASM vs Selvr split and compiler report.</p>
-      </a>
-      <a class="card" href="benchmarks/tti.html">
-        <h3>TTI &amp; FPS</h3>
-        <p>Cold start, time-to-interactive, and animation frame rate.</p>
+      <a class="card" href="benchmarks/index.html">
+        <h3>Runtime harness</h3>
+        <p>fib, sieve, and matmul on selvr-vm, emitted JS, and plain JS. Run <code>selvr bench</code>.</p>
       </a>
     </div>
     </div>
@@ -348,7 +340,7 @@
 </main>
 
 <footer>
-  <p>Clone and build from the <a href="https://github.com/JaredScar/Selvr">GitHub repository</a>. Run compile benchmarks from the repo root: <code>docs/benchmarks/compile.sh</code>.</p>
+  <p>Clone and build from the <a href="https://github.com/JaredScar/Selvr">GitHub repository</a>. Runtime numbers: <code>selvr bench</code>. Compile times: <code>docs/benchmarks/compile.sh</code>.</p>
 </footer>
 
 </body>

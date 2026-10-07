@@ -16,6 +16,8 @@ selvr-parser      = { path = "../selvr-parser" }
 selvr-typechecker = { path = "../selvr-typechecker" }
 selvr-codegen     = { path = "../selvr-codegen" }
 selvr-ir          = { path = "../selvr-ir" }
+selvr-bytecode    = { path = "../selvr-bytecode" }
+selvr-vm          = { path = "../selvr-vm" }
 selvr-target      = { path = "../selvr-target" }
 selvr-bridge      = { path = "../selvr-bridge" }
 selvr-pkg         = { path = "../selvr-pkg" }

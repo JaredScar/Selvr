@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selvr benchmarks</title>
+  <style>
+    :root {
+      --bg: #0d0f14; --surface: #13161f; --border: #232736;
+      --text: #e2e8f0; --muted: #64748b; --accent: #00d4aa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 12px; }
+    .logo { font-size: 20px; font-weight: 800; color: var(--accent); text-decoration: none; }
+    main { max-width: 760px; margin: 40px auto 80px; padding: 0 24px; }
+    h1 { font-size: 28px; margin-bottom: 12px; }
+    p, li { color: var(--muted); line-height: 1.65; }
+    p { margin: 12px 0; }
+    ul { margin: 8px 0 8px 20px; }
+    code, pre { font-family: ui-monospace, Consolas, monospace; }
+    code { color: var(--text); background: var(--surface); padding: 1px 5px; border-radius: 4px; }
+    pre { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; border-radius: 8px; color: var(--text); overflow-x: auto; margin: 14px 0; }
+    a { color: var(--accent); }
+    h2 { margin-top: 28px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="../index.html">Selvr</a>
+  </header>
+  <main>
+    <h1>Benchmarks</h1>
+    <p>
+      The numbers come from <code>selvr bench</code>. It compiles
+      <code>fib.self</code>, <code>sieve.self</code>, and <code>matmul.self</code>
+      with the real CLI, runs the bytecode on <code>selvr-vm</code>, runs the
+      emitted JavaScript in Node, and runs the same algorithms in plain JavaScript.
+    </p>
+    <pre>cargo run -p selvr-cli --release -- bench</pre>
+    <p>
+      The VM measured here is the native bytecode interpreter. It is not hosted
+      inside WebAssembly, and it does not skip parsing in the browser: the JS
+      backend still emits JavaScript, which Node parses and JIT-compiles.
+      On these loops the interpreter is expected to take longer than V8.
+    </p>
+    <h2>What is checked</h2>
+    <ul>
+      <li><code>fib(10) = 55</code>, then the timed run is <code>fib(40)</code> repeated.</li>
+      <li><code>sieve(10) = 4</code>, <code>sieve(100) = 25</code>, <code>sieve(10000) = 1229</code>.</li>
+      <li>A 2×2 matmul sums to <code>2.75</code>. The timed run is 32×32. All three implementations have to agree.</li>
+    </ul>
+    <h2>Compile times</h2>
+    <p>
+      <code>docs/benchmarks/compile.sh</code> times <code>selvr build --emit js</code>
+      and <code>selvr build --emit bc</code> on generated files of N tiny functions.
+      Those files are not an application. If <code>selvr</code> is missing, or a
+      compile fails, the script stops. <code>tsc</code> and <code>esbuild</code>
+      are timed only when they are installed.
+    </p>
+    <h2>Withdrawn</h2>
+    <p>
+      The old startup, time-to-interactive, and hybrid pages did not measure Selvr.
+      They compared filler bundles, handwritten loops, and a WASM module assembled
+      in the page. They are kept only so old links explain that.
+    </p>
+  </main>
+</body>
+</html>

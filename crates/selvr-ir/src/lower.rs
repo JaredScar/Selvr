@@ -233,6 +233,11 @@ fn lower_expr(ctx: &mut LowerCtx, expr: &Expr) -> Option<IrLocal> {
                 if let Some(base_l) = lower_expr_local(ctx, base) {
                     ctx.emit(Instr::SetField { base: base_l, field: field.clone(), val });
                 }
+            } else if let ExprKind::Index { base, index } = &target.kind {
+                if let Some(array) = lower_expr_local(ctx, base) {
+                    let idx = lower_expr_val(ctx, index);
+                    ctx.emit(Instr::ArraySet { array, idx, val });
+                }
             }
             None
         }

@@ -30,14 +30,21 @@ pub struct JsEmitter {
     buf: String,
     indent: usize,
     source_map: SourceMap,
+    map_file: String,
 }
 
 impl JsEmitter {
     pub fn new(out_file: &str, src_file: &str) -> Self {
+        let map_file = std::path::Path::new(out_file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| format!("{n}.map"))
+            .unwrap_or_else(|| "output.js.map".to_string());
         Self {
             buf: String::new(),
             indent: 0,
             source_map: SourceMap::new(out_file, &[src_file]),
+            map_file,
         }
     }
 
@@ -49,8 +56,7 @@ impl JsEmitter {
             self.buf.push('\n');
         }
         let sm_json = self.source_map.to_json();
-        // Append source map reference comment
-        self.buf.push_str("\n//# sourceMappingURL=output.js.map\n");
+        self.buf.push_str(&format!("\n//# sourceMappingURL={}\n", self.map_file));
         Ok((self.buf, sm_json))
     }
 

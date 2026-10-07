@@ -80,11 +80,11 @@ Every existing option makes you choose between **fast** and **pleasant to write*
 These are the tasks that prove the competitive claims above. Treat them as the most important items in the plan.
 
 - [x] Produce a GC-pause benchmark: Selvr animation loop vs. JS animation loop under memory pressure (`examples/24_benchmark_animation.self`)
-- [x] Produce a startup benchmark: Selvr bytecode cold start vs. equivalent JS bundle parse time (`docs/benchmarks/startup.html`)
+- [ ] Startup / parse-time comparison against real framework bundles — the old `docs/benchmarks/startup.html` chart did not measure Selvr and was withdrawn
 - [x] Produce a type soundness test suite demonstrating cases TypeScript allows but Selvr rejects (`examples/23_type_system_soundness.self`)
 - [x] Write a side-by-side code comparison page (JS vs. Selvr for 5 representative tasks) (`docs/comparison.html`)
 - [x] Write a "Why Selvr?" page on the official site backed by the benchmark data above (`docs/why-selvr.html`)
-- [x] Produce a hybrid-split benchmark: same algorithm run fully in JS vs. auto-split WASM+JS (`docs/benchmarks/hybrid.html`)
+- [ ] Hybrid WASM/JS timing — `docs/benchmarks/hybrid.html` assembled its own WASM and was withdrawn. Runtime numbers are `selvr bench`
 
 ---
 
@@ -139,7 +139,7 @@ Goal: bypass JavaScript entirely for compute-heavy code. Selvr compiles to a com
 - [x] Implement IR → bytecode emitter — `crates/selvr-bytecode/src/emit.rs`
 - [x] Add optimisation passes (constant folding, dead code elimination, inlining) — `crates/selvr-bytecode/src/opt.rs`
 - [x] Support incremental compilation (only rebuild what changed) — `crates/selvr-bytecode/src/incr.rs`
-- [x] Benchmark compile times against TypeScript and esbuild — `docs/benchmarks/compile.sh`
+- [x] Benchmark compile times of `selvr build` (`--emit js` and `--emit bc`) on synthetic N-function files; tsc and esbuild only when installed — `docs/benchmarks/compile.sh`
 
 ### 2.3 Browser runtime (VM)
 - [x] Build the VM core in Rust, compiled to WebAssembly — `crates/selvr-vm/`
@@ -149,12 +149,12 @@ Goal: bypass JavaScript entirely for compute-heavy code. Selvr compiles to a com
 - [x] Implement DOM bindings (so Selvr can manipulate the page) — `crates/selvr-vm/src/dom.rs`
 - [x] Implement fetch, timers, and event loop integration — `crates/selvr-vm/src/runtime.rs`
 - [x] Publish the runtime as a single `.wasm` file included with a `<script>` tag — `runtime/selvr-loader.js`
-- [x] Benchmark against V8 (Chrome) on representative workloads — `docs/benchmarks/tti.html`, `docs/benchmarks/hybrid.html`
+- [x] Benchmark the native `selvr-vm` interpreter against Node's V8 on fib, sieve, and matmul — `selvr bench` (`docs/benchmarks/`). This is not a Chrome TTI or FPS measurement.
 
 ### 2.4 End-to-end integration
 - [x] Write a sample Selvr TodoMVC app — `examples/19_todo_app.self`
 - [x] Write a sample Selvr game or interactive demo — `examples/20_canvas_game.self`
-- [x] Measure cold start, time-to-interactive, and runtime FPS vs. JS — `docs/benchmarks/tti.html` (live measurements: parse time, TTI, 5000-particle FPS)
+- [ ] Measure cold start, time-to-interactive, and runtime FPS vs. JS — `docs/benchmarks/tti.html` did not run Selvr and was withdrawn
 
 ---
 
@@ -195,9 +195,9 @@ Goal: make the compiler the one responsible for deciding *where* each function r
 - [x] Warn (not error) when forced target contradicts analysis — `emit_target_warnings()` in CLI prints `warning:` to stderr
 
 ### 2.5.5 Benchmarks & validation
-- [x] `docs/benchmarks/hybrid.html` — side-by-side: fully JS vs. WASM (simulated) vs. auto-split Selvr across 4 workloads (matmul, fib, DOM rendering, bridge overhead)
-- [x] Measure bridge call overhead — JSON path and zero-copy `Float64Array` measured live in the browser; goal < 50 µs zero-copy shown in benchmark
-- [x] Show GPU-compute workloads (via WebGPU) as a future WASM extension target — live support detection + WGSL codegen preview added to `docs/benchmarks/hybrid.html`
+- [ ] Timed JS vs WASM vs auto-split on real compiler output — the old hybrid page was withdrawn
+- [ ] Measure bridge call overhead
+- [ ] GPU-compute workloads (`--emit gpu` is not a CLI flag)
 
 ---
 

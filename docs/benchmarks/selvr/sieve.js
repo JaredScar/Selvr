@@ -1,4 +1,4 @@
-﻿
+
 // Selvr runtime — DO NOT EDIT (generated)
 const __selvr = {
   Some: (v) => ({ tag: "Some", val: v }),
@@ -36,4 +36,4 @@ export function sieve(limit) {
 }
 
 
-//# sourceMappingURL=output.js.map
+//# sourceMappingURL=sieve.js.map

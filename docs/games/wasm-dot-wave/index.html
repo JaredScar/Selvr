@@ -48,7 +48,7 @@
     <p>
       Each frame refills two length-<strong>512</strong> <code>Float64Array</code>s and runs the same dot product <strong>4&nbsp;000</strong> times.
       <strong>TypeScript</strong> compiles to ordinary JavaScript — the hot loop stays in the JS engine.
-      The <strong>WASM + JS</strong> panel runs the inner product inside a real <code>.wasm</code> module (minimal binary, same idea as <a href="../../benchmarks/hybrid.html" style="color: var(--accent);">Hybrid benchmark</a>); the browser shell still paints the canvas in JavaScript.
+      The <strong>WASM + JS</strong> panel runs the inner product inside a small hand-assembled <code>.wasm</code> module; the browser shell still paints the canvas in JavaScript. It is not output from the Selvr compiler. Numeric results for the compiler and VM are in the <a href="../../benchmarks/index.html" style="color: var(--accent);">runtime harness</a>.
     </p>
   </div>
   <div class="split">

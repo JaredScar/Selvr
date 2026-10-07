@@ -1001,12 +1001,25 @@ impl Parser {
                 self.advance();
                 // Path: `Foo.Bar` or `Foo::Bar` — dot notation for enum variants (TypeScript-like)
                 let mut segments = vec![PathSegment { name, args: vec![], span: start }];
-                while self.eat(&Token::Dot) || self.eat(&Token::ColonColon) {
+                loop {
+                    // `obj.method(` is a method call. Leave the dot for postfix parsing.
+                    // `Foo.Bar` and `Foo::Bar` stay paths (enum variants, module paths).
+                    let method_call = matches!(self.peek(), Token::Dot)
+                        && matches!(self.tokens.get(self.pos + 1).map(|t| &t.node), Some(Token::Ident(_)))
+                        && matches!(self.tokens.get(self.pos + 2).map(|t| &t.node), Some(Token::LParen));
+                    if method_call {
+                        break;
+                    }
+                    if !(self.eat(&Token::Dot) || self.eat(&Token::ColonColon)) {
+                        break;
+                    }
                     if let Token::Ident(seg) = self.peek().clone() {
                         let s = self.peek_span();
                         self.advance();
                         segments.push(PathSegment { name: seg, args: vec![], span: s });
-                    } else { break; }
+                    } else {
+                        break;
+                    }
                 }
                 let span = start.merge(self.current_span());
                 let path = Path { segments, span };

@@ -267,7 +267,7 @@
   <nav class="header-nav">
     <a href="why-velox.html">Why Selvr?</a>
     <a href="playground/index.html">Playground</a>
-    <a href="benchmarks/startup.html">Benchmarks</a>
+    <a href="benchmarks/index.html">Benchmarks</a>
   </nav>
 </header>
 
@@ -717,12 +717,12 @@ console.log(post.title); <span class="cmt">// crashes if fetch fails</span>
       <tr>
         <td class="feature">Cold start speed</td>
         <td><span class="meh">△</span> JS parse tax on every cold load</td>
-        <td><span class="check">✓</span> Bytecode — no parser, ~8–12× faster cold start</td>
+        <td><span class="meh">△</span> <code>selvr build</code> emits JavaScript, so the browser still parses it</td>
       </tr>
       <tr>
         <td class="feature">Runtime performance</td>
-        <td><span class="meh">△</span> JIT-optimised, but GC pauses cause jank</td>
-        <td><span class="check">✓</span> Compiled to native bytecode, GC-pause-free</td>
+        <td><span class="check">✓</span> V8 JIT-compiles numeric loops</td>
+        <td><span class="meh">△</span> <code>selvr-vm</code> is a bytecode interpreter; <code>selvr bench</code> times it against that JIT</td>
       </tr>
       <tr>
         <td class="feature">Generics</td>
@@ -741,7 +741,7 @@ console.log(post.title); <span class="cmt">// crashes if fetch fails</span>
 <div class="cta-wrap">
   <a href="playground/index.html" class="cta-btn cta-primary">Try Selvr in the Playground →</a>
   <a href="why-velox.html" class="cta-btn cta-secondary">Read "Why Selvr?"</a>
-  <a href="benchmarks/startup.html" class="cta-btn cta-secondary">Run the Benchmark</a>
+  <a href="benchmarks/index.html" class="cta-btn cta-secondary">Run the Benchmark</a>
 </div>
 
 <script>

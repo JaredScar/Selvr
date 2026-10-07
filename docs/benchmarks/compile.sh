@@ -1,108 +1,127 @@
 ﻿#!/usr/bin/env bash
-# docs/benchmarks/compile.sh
+# Time `selvr build` on generated source files, and optionally tsc and esbuild.
 #
-# Compare Selvr compile times against TypeScript (tsc) and esbuild
-# for progressively larger synthetic source files.
+# The .self files are synthetic: N one-line functions, not an application and
+# not React. A missing tool is reported as "not installed". A failing command
+# aborts the script. Durations are a single wall-clock sample, so they are noisy.
 #
-# Prerequisites:
-#   cargo build --release -p selvr-cli
-#   npm install -g typescript esbuild
-#
-# Usage (from repository root):
-#   chmod +x docs/benchmarks/compile.sh
+# From the repository root, after `cargo build --release -p selvr-cli`:
 #   ./docs/benchmarks/compile.sh
-#
-# Output: a table printed to stdout.
 
 set -euo pipefail
 
-SELVR_BIN="./target/release/SELVR"
-SCRATCH_DIR=$(mktemp -d)
-trap 'rm -rf "$SCRATCH_DIR"' EXIT
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
 
-# ── Sizes to test ─────────────────────────────────────────────────────────────
-SIZES=(100 500 1000 5000 10000)
+if [[ -x ./target/release/selvr ]]; then
+  SELVR="./target/release/selvr"
+elif [[ -x ./target/release/selvr.exe ]]; then
+  SELVR="./target/release/selvr.exe"
+else
+  echo "error: target/release/selvr not found. Run: cargo build --release -p selvr-cli" >&2
+  exit 1
+fi
 
-# ── Generate a synthetic Selvr source file of N functions ─────────────────────
-gen_SELVR() {
-  local n="$1"
-  local out="$SCRATCH_DIR/bench_${n}.self"
-  {
-    for i in $(seq 1 "$n"); do
-      echo "fn func${i}(x: i32, y: i32): i32 { return x + y * ${i}; }"
-    done
-    echo "fn main(): void { console.log(func1(1, 2)); }"
-  } > "$out"
-  echo "$out"
+SCRATCH="$(mktemp -d)"
+trap 'rm -rf "$SCRATCH"' EXIT
+
+SIZES=(100 500 1000 5000)
+
+now_ns() {
+  local t
+  t="$(date +%s%N 2>/dev/null || true)"
+  if [[ "$t" =~ ^[0-9]{16,}$ ]]; then
+    printf '%s\n' "$t"
+  elif command -v python >/dev/null 2>&1; then
+    python -c 'import time; print(int(time.time()*1e9))'
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import time; print(int(time.time()*1e9))'
+  else
+    echo "error: need \`date +%s%N\` or python to measure time" >&2
+    exit 1
+  fi
 }
 
-# ── Generate an equivalent TypeScript file ────────────────────────────────────
-gen_ts() {
-  local n="$1"
-  local out="$SCRATCH_DIR/bench_${n}.ts"
-  {
-    for i in $(seq 1 "$n"); do
-      echo "function func${i}(x: number, y: number): number { return x + y * ${i}; }"
-    done
-    echo "console.log(func1(1, 2));"
-  } > "$out"
-  echo "$out"
-}
-
-# ── Generate an equivalent JS file (for esbuild) ─────────────────────────────
-gen_js() {
-  local n="$1"
-  local out="$SCRATCH_DIR/bench_${n}.js"
-  {
-    for i in $(seq 1 "$n"); do
-      echo "function func${i}(x, y) { return x + y * ${i}; }"
-    done
-    echo "console.log(func1(1, 2));"
-  } > "$out"
-  echo "$out"
-}
-
-# ── Time a command, return milliseconds ───────────────────────────────────────
+# Print milliseconds. Exit the script if the command fails.
 time_ms() {
   local start end
-  start=$(date +%s%N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1e9))')
-  "$@" >/dev/null 2>&1 || true
-  end=$(date +%s%N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1e9))')
+  start="$(now_ns)"
+  if ! "$@" >/dev/null; then
+    echo "error: command failed: $*" >&2
+    exit 1
+  fi
+  end="$(now_ns)"
   echo $(( (end - start) / 1000000 ))
 }
 
-# ── Run ───────────────────────────────────────────────────────────────────────
+gen_self() {
+  local n="$1"
+  local out="$SCRATCH/bench_${n}.self"
+  : > "$out"
+  local i
+  for i in $(seq 1 "$n"); do
+    printf 'fn func%s(x: i32, y: i32): i32 { return x + y * %s; }\n' "$i" "$i" >> "$out"
+  done
+  printf 'fn main(): void { }\n' >> "$out"
+  printf '%s\n' "$out"
+}
 
-printf "%-10s  %-12s  %-12s  %-12s\n" "Functions" "Selvr (ms)" "tsc (ms)" "esbuild (ms)"
-printf "%-10s  %-12s  %-12s  %-12s\n" "─────────" "──────────" "────────" "────────────"
+gen_ts() {
+  local n="$1"
+  local out="$SCRATCH/bench_${n}.ts"
+  : > "$out"
+  local i
+  for i in $(seq 1 "$n"); do
+    printf 'function func%s(x: number, y: number): number { return x + y * %s; }\n' "$i" "$i" >> "$out"
+  done
+  printf '%s\n' "$out"
+}
+
+gen_js() {
+  local n="$1"
+  local out="$SCRATCH/bench_${n}.js"
+  : > "$out"
+  local i
+  for i in $(seq 1 "$n"); do
+    printf 'function func%s(x, y) { return x + y * %s; }\n' "$i" "$i" >> "$out"
+  done
+  printf '%s\n' "$out"
+}
+
+has_tsc=0
+has_esbuild=0
+command -v tsc >/dev/null 2>&1 && has_tsc=1
+command -v esbuild >/dev/null 2>&1 && has_esbuild=1
+
+printf '%-10s  %-14s  %-14s  %-14s  %-14s\n' "Functions" "selvr js (ms)" "selvr bc (ms)" "tsc (ms)" "esbuild (ms)"
+printf '%-10s  %-14s  %-14s  %-14s  %-14s\n' "---------" "-------------" "-------------" "--------" "------------"
 
 for N in "${SIZES[@]}"; do
-  vx_file=$(gen_SELVR "$N")
-  ts_file=$(gen_ts "$N")
-  js_file=$(gen_js "$N")
+  self_file="$(gen_self "$N")"
+  ts_file="$(gen_ts "$N")"
+  js_file="$(gen_js "$N")"
 
-  # Selvr: parse + typecheck + emit bytecode (no JS codegen)
-  SELVR_ms="N/A"
-  if [[ -x "$SELVR_BIN" ]]; then
-    SELVR_ms=$(time_ms "$SELVR_BIN" compile --emit bc -o /dev/null "$vx_file")
+  selvr_js="$(time_ms "$SELVR" build "$self_file" -o "$SCRATCH/out.js" --emit js)"
+  selvr_bc="$(time_ms "$SELVR" build "$self_file" -o "$SCRATCH/out.vlxc" --emit bc)"
+
+  if [[ "$has_tsc" -eq 1 ]]; then
+    tsc_ms="$(time_ms tsc --noEmit --strict --target ES2022 "$ts_file")"
+  else
+    tsc_ms="not installed"
   fi
 
-  # TypeScript: full type-check (no emit)
-  tsc_ms="N/A"
-  if command -v tsc &>/dev/null; then
-    tsc_ms=$(time_ms tsc --noEmit --strict --target ES2022 "$ts_file")
+  if [[ "$has_esbuild" -eq 1 ]]; then
+    esbuild_ms="$(time_ms esbuild --bundle --outfile="$SCRATCH/bundle.js" "$js_file")"
+  else
+    esbuild_ms="not installed"
   fi
 
-  # esbuild: bundle-only (no type-check)
-  esbuild_ms="N/A"
-  if command -v esbuild &>/dev/null; then
-    esbuild_ms=$(time_ms esbuild --bundle --outfile=/dev/null "$js_file")
-  fi
-
-  printf "%-10s  %-12s  %-12s  %-12s\n" "$N" "${SELVR_ms}" "${tsc_ms}" "${esbuild_ms}"
+  printf '%-10s  %-14s  %-14s  %-14s  %-14s\n' "$N" "$selvr_js" "$selvr_bc" "$tsc_ms" "$esbuild_ms"
 done
 
 echo ""
-echo "Note: Selvr times include parse + type-check + bytecode emit."
-echo "      tsc times are type-check only (no JS emit)."
-echo "      esbuild times are bundle-only (no type-check)."
+echo "selvr js: \`selvr build --emit js\` (parse and emit JavaScript)."
+echo "selvr bc: \`selvr build --emit bc\` (parse, lower to IR, emit .vlxc)."
+echo "tsc:      type-check only, when tsc is on PATH."
+echo "esbuild:  bundle only, when esbuild is on PATH."
+echo "Sources are generated N-function files in a temp directory, not a real program."

@@ -66,7 +66,7 @@
     <h2>Selvr vs TypeScript here</h2>
     <p>
       This is not a “typed array layout” comparison — both sides use the same algorithm. The variable is the <strong>execution tier</strong>: TypeScript always ships as JavaScript; Selvr can place integer-heavy inner loops in <strong>WASM</strong> for predictable machine code and no JS GC in the hot path.
-      Compare compute ms/frame between the panels; also see <a href="../../benchmarks/hybrid.html" style="color: var(--accent);">Hybrid benchmark</a> for bridge overhead and larger workloads.
+      Compare compute ms/frame between the panels. Compiler and VM numbers for fib, sieve, and matmul are in the <a href="../../benchmarks/index.html" style="color: var(--accent);">runtime harness</a>.
     </p>
     <h2>Rebuild TypeScript bundle</h2>
     <p><code>npx esbuild game.ts --bundle --format=esm --outfile=game.js</code> from <code>typescript/</code></p>

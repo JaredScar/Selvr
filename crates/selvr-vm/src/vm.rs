@@ -212,6 +212,10 @@ impl Vm {
                         });
                         if let Some(pos) = fn_pos {
                             push!(Value::I32(pos as i32)); // function ref = index
+                        } else if name.starts_with("__method_") {
+                            // Method calls lower to a global named `__method_<name>`.
+                            // Carry the name so `Op::Call` can dispatch to a builtin.
+                            push!(Value::Str(name));
                         } else {
                             push!(Value::None);
                         }
@@ -505,6 +509,13 @@ impl Vm {
                 let s = args.first().map(|v| value_to_string(v, &self.heap)).unwrap_or_default();
                 Ok(Value::F64(s.parse().unwrap_or(0.0)))
             }
+            "__method_push" => {
+                let mut it = args.into_iter();
+                let arr = it.next().ok_or_else(|| VmError::Panic("push: missing receiver".into()))?;
+                let val = it.next().ok_or_else(|| VmError::Panic("push: missing value".into()))?;
+                self.array_push(&arr, val)?;
+                Ok(Value::Unit)
+            }
             _ => Ok(Value::Unit),
         }
     }
@@ -557,6 +568,16 @@ impl Vm {
                     return Ok(());
                 }
                 return Err(VmError::IndexOutOfBounds { idx: i, len: elems.len() });
+            }
+        }
+        Err(VmError::TypeError { expected: "array", found: arr.type_name().to_string() })
+    }
+
+    fn array_push(&mut self, arr: &Value, val: Value) -> Result<(), VmError> {
+        if let Value::Object(oi) = arr {
+            if let Some(HeapObj::Array(elems)) = self.heap.get_mut(*oi) {
+                elems.push(val);
+                return Ok(());
             }
         }
         Err(VmError::TypeError { expected: "array", found: arr.type_name().to_string() })

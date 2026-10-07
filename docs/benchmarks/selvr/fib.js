@@ -1,4 +1,4 @@
-﻿
+
 // Selvr runtime — DO NOT EDIT (generated)
 const __selvr = {
   Some: (v) => ({ tag: "Some", val: v }),
@@ -33,4 +33,4 @@ export function fib_rec(n) {
 }
 
 
-//# sourceMappingURL=output.js.map
+//# sourceMappingURL=fib.js.map

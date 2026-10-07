@@ -1,3 +1,5 @@
+mod bench;
+
 use std::{fs, path::PathBuf, process};
 use clap::{Parser as ClapParser, Subcommand, ValueEnum};
 use selvr_lexer::Lexer;
@@ -31,6 +33,8 @@ enum EmitMode {
     Js,
     /// Emit `app.wasm` + `app.js` + `app.loader.js` (hybrid compiler — Phase 2.5).
     Hybrid,
+    /// Emit a `.vlxc` bytecode module for `selvr-vm`.
+    Bc,
 }
 
 #[derive(Subcommand)]
@@ -42,7 +46,7 @@ enum Command {
         /// Output file base name (default: same name as input, no extension).
         #[arg(short, long)]
         output: Option<PathBuf>,
-        /// What to emit: `js` (transpiler) or `hybrid` (WASM+JS split).
+        /// What to emit: `js` (transpiler), `bc` (bytecode), or `hybrid` (WASM+JS split).
         #[arg(long, value_enum, default_value = "js")]
         emit: EmitMode,
         /// Emit source maps alongside output (JS mode only).
@@ -216,6 +220,16 @@ enum Command {
     ///   selvr lsp
     Lsp {},
 
+    /// Time fib, sieve, and matmul on the real VM, the JS this CLI emits, and plain JS.
+    ///
+    /// Builds `docs/benchmarks/selvr/*.self` by invoking this same binary (`selvr build`),
+    /// runs the `.vlxc` output on `selvr-vm`, and runs the `.js` output plus a hand-written
+    /// plain-JS twin under Node. Exits non-zero if the three results disagree.
+    ///
+    /// Example:
+    ///   selvr bench
+    Bench {},
+
     /// Start the Debug Adapter Protocol (DAP) server over stdin/stdout.
     ///
     /// Normally invoked automatically by VS Code when the user presses F5
@@ -248,6 +262,7 @@ fn main() {
         Command::Init    { name }                         => cmd_init(name),
         Command::Lint    { inputs, json, strict }         => cmd_lint(inputs, json, strict),
         Command::Lsp     {}                               => cmd_lsp(),
+        Command::Bench   {}                               => bench::cmd_bench(),
         Command::Dap     {}                               => cmd_dap(),
     };
     if let Err(e) = result {
@@ -351,6 +366,19 @@ fn cmd_build(
 
             // Warn about #[wasm] / #[js] conflicts.
             emit_target_warnings(&map);
+        }
+
+        // ── Bytecode for selvr-vm ─────────────────────────────────────────────
+        EmitMode::Bc => {
+            let out_path = output.unwrap_or_else(|| input.with_extension("vlxc"));
+            let out_name = out_path.display().to_string();
+            let ir = lower_module(&module);
+            let bc = selvr_bytecode::emit_module(&ir, &src_name);
+            let bytes = selvr_bytecode::encode(&bc)
+                .map_err(|e| anyhow::anyhow!("bytecode encode failed: {e}"))?;
+            fs::write(&out_path, &bytes)
+                .with_context(|| format!("cannot write `{out_name}`"))?;
+            println!("compiled `{src_name}` → `{out_name}` ({} bytes)", bytes.len());
         }
     }
 

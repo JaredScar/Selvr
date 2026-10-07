@@ -253,6 +253,7 @@ let reactBytes = 0;
 let vueBytes = 0;
 let angularBytes = 0;
 let selvrBytes = 0;
+let selvrStartupSrc = "";
 
 async function prefetchFrameworks() {
   const load = async (url) => {
@@ -279,23 +280,42 @@ async function prefetchFrameworks() {
   angularBytes = angularParts.slice(0, NG_SIZE_URLS.length).reduce((sum, text) => sum + text.length, 0);
 }
 
+function selvrJsUrls() {
+  return ["fib", "sieve", "matmul"].map((name) => new URL(`./selvr/${name}.js`, import.meta.url).href);
+}
+
+function asStartupScript(sources) {
+  return sources.map((src, index) => {
+    let body = src.replace(/^export /gm, "").replace(/\/\/# sourceMappingURL=.*$/gm, "");
+    if (index > 0) body = body.replace(/const __selvr = \{[\s\S]*?\n\};/, "");
+    return body;
+  }).join("\n");
+}
+
+async function prefetchSelvr() {
+  const texts = await Promise.all(selvrJsUrls().map(async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`could not fetch ${url} (${res.status})`);
+    return res.text();
+  }));
+  selvrBytes = texts.reduce((sum, text) => sum + text.length, 0);
+  selvrStartupSrc = asStartupScript(texts);
+}
+
 function startSelvr() {
-  const vmUrl = new URL("./vm/selvr_vm.js", import.meta.url).href;
-  const bcUrl = new URL("./selvr/fib.vlxc", import.meta.url).href;
   return withFrame((doc) => {
+    addScript(doc, selvrStartupSrc);
     addScript(doc, `
-      import init, { SELVR_load, SELVR_call } from ${JSON.stringify(vmUrl)};
       try {
-        await init();
-        const res = await fetch(${JSON.stringify(bcUrl)});
-        const bytes = new Uint8Array(await res.arrayBuffer());
-        SELVR_load(bytes);
-        const n = SELVR_call("fib", "[10]");
-        parent.postMessage({ ok: n === "55", text: n, error: "fib(10)=" + n }, "*");
+        const n = fib(10);
+        const primes = sieve(10);
+        const product = matmul([1, 0, 0, 1], [1, 0, 0, 1], 2);
+        const ok = n === 55 && primes === 4 && product.length === 4;
+        parent.postMessage({ ok, text: String(n), error: "fib=" + n }, "*");
       } catch (err) {
         parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
       }
-    `, "module");
+    `);
   });
 }
 
@@ -418,19 +438,28 @@ function measureSelvrDom() {
       const host = document.createElement("div");
       document.body.appendChild(host);
       const updateNs = __time(() => { for (let i = 0; i < 1000; i++) host.textContent = String(i); }, 5, 1);
-      let listed = 0;
-      function paintList() {
-        host.textContent = "";
+      const nodes = new Array(1000);
+      for (let i = 0; i < 1000; i++) {
+        const row = document.createElement("div");
+        row.textContent = "0";
+        host.appendChild(row);
+        nodes[i] = row;
+      }
+      let gen = 0;
+      const listNs = __time(() => {
+        const base = ++gen;
+        for (let i = 0; i < 1000; i++) nodes[i].textContent = String(base + i);
+      }, 5, 1);
+      const replaceNs = __time(() => {
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < 1000; i++) {
           const row = document.createElement("div");
           row.textContent = String(i);
-          host.appendChild(row);
+          frag.appendChild(row);
         }
-        listed = host.childElementCount;
-      }
-      const listNs = __time(() => paintList(), 5, 1);
-      const replaceNs = __time(() => paintList(), 5, 1);
-      if (listed !== 1000) throw new Error("dom check failed");
+        host.replaceChildren(frag);
+      }, 5, 1);
+      if (host.childElementCount !== 1000 || nodes[0].textContent === "0") throw new Error("dom check failed");
       parent.postMessage({ ok: true, updateNs, listNs, replaceNs }, "*");
     } catch (err) {
       parent.postMessage({ ok: false, error: String(err && err.message || err) }, "*");
@@ -447,9 +476,11 @@ function measureReact() {
       function show(text) {
         ReactDOM.flushSync(() => root.render(React.createElement("span", null, text)));
       }
+      let gen = 0;
       function showList() {
+        const base = ++gen;
         const kids = new Array(1000);
-        for (let i = 0; i < 1000; i++) kids[i] = React.createElement("div", { key: i }, String(i));
+        for (let i = 0; i < 1000; i++) kids[i] = React.createElement("div", { key: i }, String(base + i));
         ReactDOM.flushSync(() => root.render(React.createElement("div", null, kids)));
       }
       show("0");
@@ -483,8 +514,10 @@ function measureVue() {
           for (let i = 0; i < 1000; i++) { state.rows = []; state.n = String(i); await Vue.nextTick(); }
         }, 5, 1);
         let listed = 0;
+        let gen = 0;
         async function paintList() {
-          state.rows = Array.from({ length: 1000 }, (_, i) => i);
+          const base = ++gen;
+          state.rows = Array.from({ length: 1000 }, (_, i) => base + i);
           await Vue.nextTick();
           listed = host.querySelectorAll("div").length;
         }
@@ -525,14 +558,19 @@ function measureAngular() {
       function tick(mut) { mut(inst()); appRef.tick(); }
       const updateNs = __time(() => { for (let i = 0; i < 1000; i++) tick((o) => { o.n = String(i); o.rows = []; }); }, 5, 1);
       let listed = 0;
-      const listNs = __time(() => { tick((o) => { o.rows = Array.from({ length: 1000 }, (_, i) => i); }); listed = document.querySelectorAll("bench-root div").length; }, 5, 1);
+      let gen = 0;
+      const listNs = __time(() => {
+        const base = ++gen;
+        tick((o) => { o.rows = Array.from({ length: 1000 }, (_, i) => base + i); });
+        listed = document.querySelectorAll("bench-root div").length;
+      }, 5, 1);
       const samples = [];
       for (let s = 0; s < 5; s++) {
         const t0 = performance.now();
         appRef.destroy();
         if (!document.querySelector("bench-root")) document.body.appendChild(document.createElement("bench-root"));
         appRef = await browser.bootstrapApplication(Cmp);
-        tick((o) => { o.rows = Array.from({ length: 1000 }, (_, i) => i); });
+        tick((o) => { o.rows = Array.from({ length: 1000 }, (_, i) => i + 1); });
         samples.push((performance.now() - t0) * 1e6);
       }
       const replaceNs = samples.slice().sort((a, b) => a - b)[(samples.length / 2) | 0];
@@ -627,11 +665,7 @@ async function run() {
     await paint();
     let startupOk = true;
     try {
-      const [wasm, glue] = await Promise.all([
-        fetch(new URL("./vm/selvr_vm_bg.wasm", import.meta.url)),
-        fetch(new URL("./vm/selvr_vm.js", import.meta.url)),
-      ]);
-      selvrBytes = (await wasm.arrayBuffer()).byteLength + (await glue.arrayBuffer()).byteLength;
+      await prefetchSelvr();
       fill("#row-size", { selvr: fmtBytes(selvrBytes) });
     } catch (err) {
       fill("#row-size", { selvr: "failed" });

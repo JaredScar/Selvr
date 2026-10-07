@@ -6,97 +6,251 @@
   <title>Selvr benchmarks</title>
   <style>
     :root {
-      --bg: #0d0f14; --surface: #13161f; --border: #232736;
-      --text: #e2e8f0; --muted: #64748b; --accent: #00d4aa;
+      --bg: #0d0f14;
+      --surface: #13161f;
+      --border: #232736;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #00d4aa;
+      --accent2: #7c6af7;
       --bad: #f87171;
+      --react: #61dafb;
+      --vue: #42b883;
+      --angular: #ff6b8a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 12px; }
-    .logo { font-size: 20px; font-weight: 800; color: var(--accent); text-decoration: none; }
-    main { max-width: 980px; margin: 40px auto 80px; padding: 0 24px; }
-    h1 { font-size: 28px; margin-bottom: 18px; }
-    p { color: var(--muted); line-height: 1.65; margin: 0; }
-    a { color: var(--accent); }
-    .toolbar { display: flex; align-items: center; gap: 16px; margin: 18px 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(900px 420px at 15% -10%, rgba(0, 212, 170, 0.08), transparent 55%),
+        radial-gradient(700px 380px at 100% 0%, rgba(124, 106, 247, 0.1), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      background: rgba(19, 22, 31, 0.92);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .logo-sub { font-size: 13px; color: var(--muted); }
+    .header-nav { margin-left: auto; display: flex; gap: 16px; }
+    .header-nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .header-nav a:hover { color: var(--text); }
+    main { max-width: 1040px; margin: 0 auto; padding: 36px 24px 72px; }
+    .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+    h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.6px; }
+    .toolbar { display: flex; align-items: center; gap: 14px; }
     button {
       background: var(--accent); color: #04241c; border: 0; border-radius: 8px;
-      padding: 8px 14px; font-weight: 700; cursor: pointer;
+      padding: 10px 16px; font-weight: 700; cursor: pointer;
     }
     button:disabled { opacity: 0.55; cursor: progress; }
-    #status { margin: 0; }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
-    .table-wrap + .table-wrap { margin-top: 28px; }
+    #status { color: var(--muted); font-size: 14px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px 14px;
+    }
+    .stat b {
+      display: block;
+      font-size: 26px;
+      font-weight: 750;
+      letter-spacing: -0.4px;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 4px;
+    }
+    .stat span { color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .panel {
+      background: rgba(19, 22, 31, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 18px 8px;
+      margin-bottom: 16px;
+    }
+    .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    h2 { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .legend { display: flex; gap: 14px; color: var(--muted); font-size: 12px; }
+    .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 99px; margin-right: 6px; }
+    .legend .selvr { background: var(--accent); }
+    .legend .react { background: var(--react); }
+    .legend .vue { background: var(--vue); }
+    .legend .angular { background: var(--angular); }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; background: var(--surface); }
-    td { background: #10131a; }
+    th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+    th { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
     tr:last-child td { border-bottom: 0; }
+    td small { display: block; color: var(--muted); font-size: 11px; font-weight: 500; margin-top: 2px; }
+    .num { display: block; }
+    .track { display: block; height: 4px; margin-top: 7px; background: #1c2130; border-radius: 99px; overflow: hidden; min-width: 72px; }
+    .fill { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--accent); }
+    td.react .fill { background: var(--react); }
+    td.vue .fill { background: var(--vue); }
+    td.angular .fill { background: var(--angular); }
+    td.plain .fill, td.js .fill { background: var(--accent2); }
     .fail { color: var(--bad); }
-    .ok { color: var(--accent); }
+    @media (max-width: 800px) {
+      header { padding: 0 16px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .hero { flex-direction: column; align-items: flex-start; }
+      h1 { font-size: 30px; }
+    }
   </style>
 </head>
 <body>
   <header>
     <a class="logo" href="../index.html">Selvr</a>
+    <span class="logo-sub">Benchmarks</span>
+    <nav class="header-nav">
+      <a href="../index.html">Docs</a>
+      <a href="https://github.com/JaredScar/Selvr">GitHub</a>
+    </nav>
   </header>
   <main>
-    <h1>Benchmarks</h1>
-    <div class="toolbar">
-      <button id="run" type="button">Run again</button>
-      <p id="status">Starting the run…</p>
+    <div class="hero">
+      <h1>Benchmarks</h1>
+      <div class="toolbar">
+        <button id="run" type="button">Run again</button>
+        <p id="status">Starting the run…</p>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Workload</th>
-            <th>Problem</th>
-            <th>Result</th>
-            <th>selvr-vm</th>
-            <th>selvr-js</th>
-            <th>plain-js</th>
-            <th>vm / plain</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr id="row-fib">
-            <td>fib</td><td>fib(40)</td>
-            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
-          </tr>
-          <tr id="row-sieve">
-            <td>sieve</td><td>sieve(10000)</td>
-            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
-          </tr>
-          <tr id="row-matmul">
-            <td>matmul</td><td>32×32</td>
-            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="stats">
+      <div class="stat"><b id="stat-fib">—</b><span>fib · vm / plain</span></div>
+      <div class="stat"><b id="stat-sieve">—</b><span>sieve · vm / plain</span></div>
+      <div class="stat"><b id="stat-matmul">—</b><span>matmul · vm / plain</span></div>
+      <div class="stat"><b id="stat-startup">—</b><span>Selvr startup</span></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Startup</th>
-            <th>selvr-vm</th>
-            <th title="react 18.3.1 and react-dom 18.3.1">React</th>
-            <th title="vue 3.5.22">Vue</th>
-            <th title="Angular 19.2.15">Angular</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr id="row-startup">
-            <td>startup</td>
-            <td class="vm">—</td>
-            <td class="react">—</td>
-            <td class="vue">—</td>
-            <td class="angular">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Runtime</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Workload</th>
+              <th>Problem</th>
+              <th>Result</th>
+              <th>selvr-vm</th>
+              <th>selvr-js</th>
+              <th>plain-js</th>
+              <th>vm / plain</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-fib">
+              <td>fib</td><td>fib(40)</td>
+              <td class="result"><span class="num">—</span></td>
+              <td class="vm"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="js"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="plain"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="ratio"><span class="num">—</span></td>
+            </tr>
+            <tr id="row-sieve">
+              <td>sieve</td><td>sieve(10000)</td>
+              <td class="result"><span class="num">—</span></td>
+              <td class="vm"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="js"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="plain"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="ratio"><span class="num">—</span></td>
+            </tr>
+            <tr id="row-matmul">
+              <td>matmul</td><td>32×32</td>
+              <td class="result"><span class="num">—</span></td>
+              <td class="vm"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="js"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="plain"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="ratio"><span class="num">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Interface</h2>
+        <div class="legend">
+          <span><i class="selvr"></i>Selvr</span>
+          <span><i class="react"></i>React</span>
+          <span><i class="vue"></i>Vue</span>
+          <span><i class="angular"></i>Angular</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th title="WebAssembly interpreter for startup. Direct DOM for update, list, and replace.">Selvr</th>
+              <th title="react 18.3.1 and react-dom 18.3.1">React</th>
+              <th title="vue 3.5.22">Vue</th>
+              <th title="Angular 19.2.15">Angular</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-startup">
+              <td>startup<small>first load and mount</small></td>
+              <td class="selvr"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="react"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="vue"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="angular"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+            </tr>
+            <tr id="row-update">
+              <td>update<small>1,000 text writes</small></td>
+              <td class="selvr"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="react"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="vue"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="angular"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+            </tr>
+            <tr id="row-list">
+              <td>list<small>1,000 rows</small></td>
+              <td class="selvr"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="react"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="vue"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="angular"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+            </tr>
+            <tr id="row-replace">
+              <td>replace<small>tear down and mount again</small></td>
+              <td class="selvr"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="react"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="vue"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="angular"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+            </tr>
+            <tr id="row-size">
+              <td>size<small>code loaded for startup</small></td>
+              <td class="selvr"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="react"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="vue"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+              <td class="angular"><span class="num">—</span><span class="track"><span class="fill"></span></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
   <script type="module" src="./page.mjs"></script>
 </body>

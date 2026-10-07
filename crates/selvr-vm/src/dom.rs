@@ -3,6 +3,9 @@
 //! On WASM targets these call through to real JS APIs via `web-sys`.
 //! On native targets (CLI / tests) they are no-op stubs.
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
 // ── console.log ───────────────────────────────────────────────────────────────
 
 #[cfg(target_arch = "wasm32")]

@@ -43,10 +43,11 @@ pub fn SELVR_load(bytes: &[u8]) -> Result<(), JsValue> {
 /// Returns a JSON-encoded result or an error string.
 #[wasm_bindgen]
 pub fn SELVR_call(name: &str, args_json: &str) -> Result<String, JsValue> {
-    let args = parse_args(args_json)?;
+    let parsed = parse_args(args_json)?;
     VM.with(|cell| {
         let mut borrow = cell.borrow_mut();
         let vm = borrow.as_mut().ok_or_else(|| JsValue::from_str("no module loaded"))?;
+        let args = materialize(vm, parsed);
         let result = vm.call_by_name(name, args)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(value_to_json(&result, &vm.heap))
@@ -82,33 +83,90 @@ pub fn SELVR_drain_output() -> String {
 
 // ── Argument / result serialisation ──────────────────────────────────────────
 
-fn parse_args(json: &str) -> Result<Vec<Value>, JsValue> {
-    // Minimal JSON array parser for primitive types.
+/// A JSON value parsed before it is allocated on the VM heap.
+/// Numbers with a decimal point or an exponent become `f64`. Integers stay `i32`.
+enum JsonArg {
+    None,
+    Bool(bool),
+    I32(i32),
+    F64(f64),
+    Str(String),
+    Arr(Vec<JsonArg>),
+}
+
+fn parse_args(json: &str) -> Result<Vec<JsonArg>, JsValue> {
     let json = json.trim();
-    if json == "[]" || json.is_empty() { return Ok(vec![]); }
-
-    let inner = json.trim_start_matches('[').trim_end_matches(']').trim();
-    if inner.is_empty() { return Ok(vec![]); }
-
+    if json.is_empty() || json == "[]" {
+        return Ok(vec![]);
+    }
+    if !json.starts_with('[') || !json.ends_with(']') {
+        return Err(JsValue::from_str("args_json must be a JSON array"));
+    }
+    let inner = json[1..json.len() - 1].trim();
+    if inner.is_empty() {
+        return Ok(vec![]);
+    }
     let mut args = Vec::new();
     for token in split_json_array(inner) {
-        let t = token.trim();
-        if t == "null" || t == "undefined" {
-            args.push(Value::None);
-        } else if t == "true" {
-            args.push(Value::Bool(true));
-        } else if t == "false" {
-            args.push(Value::Bool(false));
-        } else if t.starts_with('"') {
-            let s = t.trim_matches('"').to_string();
-            args.push(Value::Str(smol_str::SmolStr::new(s)));
-        } else if let Ok(n) = t.parse::<i32>() {
-            args.push(Value::I32(n));
-        } else if let Ok(f) = t.parse::<f64>() {
-            args.push(Value::F64(f));
-        }
+        args.push(parse_json_value(token)?);
     }
     Ok(args)
+}
+
+fn parse_json_value(raw: &str) -> Result<JsonArg, JsValue> {
+    let t = raw.trim();
+    if t == "null" || t == "undefined" {
+        return Ok(JsonArg::None);
+    }
+    if t == "true" {
+        return Ok(JsonArg::Bool(true));
+    }
+    if t == "false" {
+        return Ok(JsonArg::Bool(false));
+    }
+    if t.starts_with('"') && t.ends_with('"') && t.len() >= 2 {
+        return Ok(JsonArg::Str(t[1..t.len() - 1].to_string()));
+    }
+    if t.starts_with('[') && t.ends_with(']') {
+        let inner = t[1..t.len() - 1].trim();
+        if inner.is_empty() {
+            return Ok(JsonArg::Arr(Vec::new()));
+        }
+        let mut items = Vec::new();
+        for part in split_json_array(inner) {
+            items.push(parse_json_value(part)?);
+        }
+        return Ok(JsonArg::Arr(items));
+    }
+    if t.contains('.') || t.contains('e') || t.contains('E') {
+        let f = t.parse::<f64>().map_err(|_| JsValue::from_str("bad f64 argument"))?;
+        return Ok(JsonArg::F64(f));
+    }
+    if let Ok(n) = t.parse::<i32>() {
+        return Ok(JsonArg::I32(n));
+    }
+    if let Ok(f) = t.parse::<f64>() {
+        return Ok(JsonArg::F64(f));
+    }
+    Err(JsValue::from_str("unsupported JSON argument"))
+}
+
+fn materialize(vm: &mut Vm, args: Vec<JsonArg>) -> Vec<Value> {
+    args.into_iter().map(|arg| materialize_one(vm, arg)).collect()
+}
+
+fn materialize_one(vm: &mut Vm, arg: JsonArg) -> Value {
+    match arg {
+        JsonArg::None => Value::None,
+        JsonArg::Bool(b) => Value::Bool(b),
+        JsonArg::I32(n) => Value::I32(n),
+        JsonArg::F64(f) => Value::F64(f),
+        JsonArg::Str(s) => Value::Str(smol_str::SmolStr::new(s)),
+        JsonArg::Arr(items) => {
+            let elems = items.into_iter().map(|item| materialize_one(vm, item)).collect();
+            vm.heap.alloc_array(elems)
+        }
+    }
 }
 
 fn split_json_array(s: &str) -> Vec<&str> {

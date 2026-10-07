@@ -8,13 +8,15 @@
     :root {
       --bg: #0d0f14; --surface: #13161f; --border: #232736;
       --text: #e2e8f0; --muted: #64748b; --accent: #00d4aa;
+      --bad: #f87171;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
     header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 12px; }
     .logo { font-size: 20px; font-weight: 800; color: var(--accent); text-decoration: none; }
-    main { max-width: 760px; margin: 40px auto 80px; padding: 0 24px; }
+    main { max-width: 980px; margin: 40px auto 80px; padding: 0 24px; }
     h1 { font-size: 28px; margin-bottom: 12px; }
+    h2 { margin-top: 28px; font-size: 18px; }
     p, li { color: var(--muted); line-height: 1.65; }
     p { margin: 12px 0; }
     ul { margin: 8px 0 8px 20px; }
@@ -22,7 +24,21 @@
     code { color: var(--text); background: var(--surface); padding: 1px 5px; border-radius: 4px; }
     pre { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; border-radius: 8px; color: var(--text); overflow-x: auto; margin: 14px 0; }
     a { color: var(--accent); }
-    h2 { margin-top: 28px; font-size: 18px; }
+    .toolbar { display: flex; align-items: center; gap: 16px; margin: 18px 0; }
+    button {
+      background: var(--accent); color: #04241c; border: 0; border-radius: 8px;
+      padding: 8px 14px; font-weight: 700; cursor: pointer;
+    }
+    button:disabled { opacity: 0.55; cursor: progress; }
+    #status { margin: 0; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; background: var(--surface); }
+    td { background: #10131a; }
+    tr:last-child td { border-bottom: 0; }
+    .fail { color: var(--bad); }
+    .ok { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -32,21 +48,59 @@
   <main>
     <h1>Benchmarks</h1>
     <p>
-      The numbers come from <code>selvr bench</code>. It compiles
-      <code>fib.self</code>, <code>sieve.self</code>, and <code>matmul.self</code>
-      with the real CLI, runs the bytecode on <code>selvr-vm</code>, runs the
-      emitted JavaScript in Node, and runs the same algorithms in plain JavaScript.
+      This page runs <code>fib</code>, <code>sieve</code>, and <code>matmul</code> in your browser.
+      <code>selvr-js</code> is the JavaScript produced by <code>selvr build</code>
+      (<code>selvr/fib.js</code>, <code>selvr/sieve.js</code>, <code>selvr/matmul.js</code>).
+      <code>selvr-vm</code> is the Selvr bytecode interpreter, compiled to WebAssembly,
+      executing the <code>.vlxc</code> files from <code>selvr build --emit bc</code>.
+      <code>plain-js</code> is the same algorithm written by hand.
+    </p>
+    <div class="toolbar">
+      <button id="run" type="button">Run again</button>
+      <p id="status">Starting the run…</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Workload</th>
+            <th>Problem</th>
+            <th>Result</th>
+            <th>selvr-vm</th>
+            <th>selvr-js</th>
+            <th>plain-js</th>
+            <th>vm / plain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-fib">
+            <td>fib</td><td>fib(40)</td>
+            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
+          </tr>
+          <tr id="row-sieve">
+            <td>sieve</td><td>sieve(10000)</td>
+            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
+          </tr>
+          <tr id="row-matmul">
+            <td>matmul</td><td>32×32</td>
+            <td class="result">—</td><td class="vm">—</td><td class="js">—</td><td class="plain">—</td><td class="ratio">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="checks"></p>
+    <p>
+      Each cell is the median time of one call, from 5 samples. A sample repeats the call until the batch lasts at least 8&nbsp;ms, then divides by that count, so the browser timer can see short JavaScript loops. The VM is loaded again before each sample; that reload is outside the clock. Matrix inputs are built outside the clock. <code>vm / plain</code> is the interpreter time divided by the plain JavaScript time. On these loops the interpreter is expected to take longer than the JavaScript engine.
+    </p>
+    <p>
+      The numbers are measured in your browser when the page runs.
+      <code>selvr bench</code> times the same interpreter as a native binary. Calls from this page pass arguments as JSON:
     </p>
     <pre>cargo run -p selvr-cli --release -- bench</pre>
-    <p>
-      The VM measured here is the native bytecode interpreter. It is not hosted
-      inside WebAssembly, and it does not skip parsing in the browser: the JS
-      backend still emits JavaScript, which Node parses and JIT-compiles.
-      On these loops the interpreter is expected to take longer than V8.
-    </p>
+
     <h2>What is checked</h2>
     <ul>
-      <li><code>fib(10) = 55</code>, then the timed run is <code>fib(40)</code> repeated.</li>
+      <li><code>fib(10) = 55</code>, then the timed run is <code>fib(40) = 102334155</code>.</li>
       <li><code>sieve(10) = 4</code>, <code>sieve(100) = 25</code>, <code>sieve(10000) = 1229</code>.</li>
       <li>A 2×2 matmul sums to <code>2.75</code>. The timed run is 32×32. All three implementations have to agree.</li>
     </ul>
@@ -65,5 +119,6 @@
       in the page. They are kept only so old links explain that.
     </p>
   </main>
+  <script type="module" src="./page.mjs"></script>
 </body>
 </html>

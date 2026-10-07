@@ -4,6 +4,8 @@
 
 Selvr is a statically-typed language aimed at the browser. `selvr build` emits JavaScript, which the host still parses and JIT-compiles. A bytecode interpreter (`selvr-vm`) can run the same programs; on numeric loops it is generally slower than V8, which is the usual result for an interpreter. `selvr bench` measures that directly.
 
+Documentation is published at <https://jaredscar.github.io/Selvr/> (GitHub Pages, `docs/` on `master`).
+
 ```SELVR
 async fn main() {
     let button = dom::query("#greet").unwrap();
@@ -89,7 +91,7 @@ SELVR/
 ├── runtime/                ← WebAssembly VM (Phase 2, Rust → WASM)
 ├── stdlib/                 ← Standard library source
 ├── examples/               ← Example Selvr programs
-└── website/                ← Official website source
+└── docs/                   ← GitHub Pages site (https://jaredscar.github.io/Selvr/)
 ```
 
 ---
